@@ -61,7 +61,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Cross-Device Sync
 
 - [ ] **SYNC-01**: Conversation context syncs across Mac, iPhone, and Apple Watch
-- [ ] **SYNC-02**: Memory and personal data accessible from any device
+- [x] **SYNC-02**: Memory and personal data accessible from any device
 - [ ] **SYNC-03**: Notifications delivered to the most appropriate device
 
 ### Integrations
@@ -139,7 +139,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | DEV-04 | Phase 7 | Pending |
 | DEV-05 | Phase 7 | Pending |
 | SYNC-01 | Phase 6 | Pending |
-| SYNC-02 | Phase 1 | Pending |
+| SYNC-02 | Phase 1 | Complete |
 | SYNC-03 | Phase 5 | Pending |
 | INTG-01 | Phase 4 | Pending |
 | INTG-02 | Phase 4 | Pending |

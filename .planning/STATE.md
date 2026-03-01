@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 1 of 7 (Foundation)
-Plan: 0 of 2 in current phase
-Status: Ready to plan
-Last activity: 2026-03-01 — Roadmap created (7 phases, 40 requirements mapped)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-03-01 — Completed 01-01: FastAPI skeleton, Docker, Supabase schema
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 5%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 3 min
+- Total execution time: 0.05 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-foundation | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: —
+- Last 5 plans: 01-01 (3 min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -45,6 +45,10 @@ Recent decisions affecting current work:
 - [Roadmap]: Flutter for iPhone, Swift for Watch, FastAPI backend, Supabase + pgvector for data and memory
 - [Roadmap]: Advice features (food, social, place) placed in Phase 7 — they require accumulated memory data from daily use to be meaningful
 - [Roadmap]: SYNC requirements split across phases: SYNC-02 in Phase 1 (cloud schema), SYNC-01 in Phase 6 (cross-device conversation), SYNC-03 in Phase 5 (notification routing)
+- [01-01]: Supabase runs as cloud project only — no local container in docker-compose (satisfies SYNC-02)
+- [01-01]: pydantic-settings intentionally has no defaults for 5 secret vars — startup failure is desired behavior
+- [01-01]: RLS policies use (select auth.uid()) caching syntax to avoid per-row function calls
+- [01-01]: memory_facts uses EAV triple pattern with valid_from/valid_until/superseded_by for full audit trail
 
 ### Pending Todos
 
@@ -60,5 +64,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Roadmap created, STATE.md and REQUIREMENTS.md traceability initialized
+Stopped at: Completed 01-01-PLAN.md — FastAPI skeleton, Docker, Supabase schema migration
 Resume file: None
