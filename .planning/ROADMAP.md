@@ -12,7 +12,7 @@ VELAR is built bottom-up along a strict dependency chain. The foundation comes f
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Foundation** - Backend, Supabase, auth, security, and cloud data layer
+- [x] **Phase 1: Foundation** - Backend, Supabase, auth, security, and cloud data layer (completed 2026-03-01)
 - [ ] **Phase 2: Voice Pipeline** - STT, TTS, Claude tool loop, and bilingual language support
 - [ ] **Phase 3: Memory System** - Personal knowledge graph with semantic retrieval
 - [ ] **Phase 4: Mac Daemon and Integrations** - Always-on Mac service, wake word, and external data tools
@@ -142,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 1/2 | In Progress|  |
+| 1. Foundation | 2/2 | Complete   | 2026-03-01 |
 | 2. Voice Pipeline | 0/3 | Not started | - |
 | 3. Memory System | 0/2 | Not started | - |
 | 4. Mac Daemon and Integrations | 0/2 | Not started | - |
