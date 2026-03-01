@@ -1,0 +1,3 @@
+-- Seed data for local development
+-- Add test data here for local Supabase CLI development
+-- DO NOT add real personal data
