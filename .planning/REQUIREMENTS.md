@@ -108,52 +108,52 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VOICE-01 | — | Pending |
-| VOICE-02 | — | Pending |
-| VOICE-03 | — | Pending |
-| VOICE-04 | — | Pending |
-| VOICE-05 | — | Pending |
-| MEM-01 | — | Pending |
-| MEM-02 | — | Pending |
-| MEM-03 | — | Pending |
-| MEM-04 | — | Pending |
-| MEM-05 | — | Pending |
-| PROACT-01 | — | Pending |
-| PROACT-02 | — | Pending |
-| PROACT-03 | — | Pending |
-| PROACT-04 | — | Pending |
-| FOOD-01 | — | Pending |
-| FOOD-02 | — | Pending |
-| FOOD-03 | — | Pending |
-| FOOD-04 | — | Pending |
-| SOCL-01 | — | Pending |
-| SOCL-02 | — | Pending |
-| SOCL-03 | — | Pending |
-| SOCL-04 | — | Pending |
-| PLACE-01 | — | Pending |
-| PLACE-02 | — | Pending |
-| PLACE-03 | — | Pending |
-| DEV-01 | — | Pending |
-| DEV-02 | — | Pending |
-| DEV-03 | — | Pending |
-| DEV-04 | — | Pending |
-| DEV-05 | — | Pending |
-| SYNC-01 | — | Pending |
-| SYNC-02 | — | Pending |
-| SYNC-03 | — | Pending |
-| INTG-01 | — | Pending |
-| INTG-02 | — | Pending |
-| INTG-03 | — | Pending |
-| INTG-04 | — | Pending |
-| LANG-01 | — | Pending |
-| LANG-02 | — | Pending |
-| LANG-03 | — | Pending |
+| VOICE-01 | Phase 2 | Pending |
+| VOICE-02 | Phase 2 | Pending |
+| VOICE-03 | Phase 2 | Pending |
+| VOICE-04 | Phase 2 | Pending |
+| VOICE-05 | Phase 2 | Pending |
+| MEM-01 | Phase 3 | Pending |
+| MEM-02 | Phase 3 | Pending |
+| MEM-03 | Phase 3 | Pending |
+| MEM-04 | Phase 3 | Pending |
+| MEM-05 | Phase 3 | Pending |
+| PROACT-01 | Phase 5 | Pending |
+| PROACT-02 | Phase 5 | Pending |
+| PROACT-03 | Phase 5 | Pending |
+| PROACT-04 | Phase 5 | Pending |
+| FOOD-01 | Phase 7 | Pending |
+| FOOD-02 | Phase 7 | Pending |
+| FOOD-03 | Phase 7 | Pending |
+| FOOD-04 | Phase 7 | Pending |
+| SOCL-01 | Phase 7 | Pending |
+| SOCL-02 | Phase 7 | Pending |
+| SOCL-03 | Phase 7 | Pending |
+| SOCL-04 | Phase 7 | Pending |
+| PLACE-01 | Phase 7 | Pending |
+| PLACE-02 | Phase 7 | Pending |
+| PLACE-03 | Phase 7 | Pending |
+| DEV-01 | Phase 4 | Pending |
+| DEV-02 | Phase 6 | Pending |
+| DEV-03 | Phase 5 | Pending |
+| DEV-04 | Phase 7 | Pending |
+| DEV-05 | Phase 7 | Pending |
+| SYNC-01 | Phase 6 | Pending |
+| SYNC-02 | Phase 1 | Pending |
+| SYNC-03 | Phase 5 | Pending |
+| INTG-01 | Phase 4 | Pending |
+| INTG-02 | Phase 4 | Pending |
+| INTG-03 | Phase 4 | Pending |
+| INTG-04 | Phase 4 | Pending |
+| LANG-01 | Phase 2 | Pending |
+| LANG-02 | Phase 2 | Pending |
+| LANG-03 | Phase 2 | Pending |
 
 **Coverage:**
 - v1 requirements: 40 total
-- Mapped to phases: 0
-- Unmapped: 40
+- Mapped to phases: 40
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-01*
-*Last updated: 2026-03-01 after initial definition*
+*Last updated: 2026-03-01 after roadmap creation — all 40 v1 requirements mapped*
