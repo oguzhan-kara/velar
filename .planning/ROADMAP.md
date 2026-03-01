@@ -32,11 +32,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Personal data tables (user profile, facts, conversations) exist in Supabase with row-level security policies that block access from a non-owner test account
   4. All secrets (API keys, DB credentials) are injected via environment variables — none hardcoded in source
   5. Memory and personal data schema is accessible from any authenticated device (Supabase cloud-backed)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 01-01: FastAPI skeleton, Docker dev environment, and Supabase local CLI setup
-- [ ] 01-02: Auth integration (Supabase auth), JWT middleware, and RLS security policies
+- [ ] 01-01-PLAN.md — FastAPI project scaffold, Docker dev environment, pydantic-settings config, async database layer, health endpoint, and Supabase schema migration (all personal data tables with pgvector)
+- [ ] 01-02-PLAN.md — Supabase Auth integration (login endpoint), JWT dependency injection, /users/me protected endpoint, and pytest suite including RLS isolation test
 
 ### Phase 2: Voice Pipeline
 **Goal**: Users can speak to VELAR and receive a premium voice response in Turkish or English
