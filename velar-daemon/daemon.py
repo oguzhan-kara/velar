@@ -5,6 +5,7 @@ import logging
 import time
 
 import rumps
+
 from config import load_config
 from wakeword import WakeWordListener
 
@@ -46,13 +47,46 @@ class VelarDaemon(rumps.App):
         logger.info("Wake word listener thread started")
 
     def _on_wake(self):
-        """Called from audio background thread when wake word detected."""
-        self.title = ICON_LISTENING
-        # Phase 04-02 wires audio capture + backend POST here.
-        # For now, log and return to idle after 2s (smoke-test hook).
-        logger.info("Wake word fired — audio capture pending (Phase 04-02)")
-        time.sleep(2)
-        self.title = ICON_IDLE
+        """Called from wake word listener thread. Dispatch pipeline on separate thread."""
+        # Return from listener thread immediately so it can detect next wake word
+        threading.Thread(target=self._run_voice_pipeline, daemon=True).start()
+
+    def _run_voice_pipeline(self):
+        """Full voice pipeline: chime -> capture -> POST -> playback. Runs on its own thread."""
+        from chime import play_chime, play_cancelled, play_audio_response
+        from audio_capture import capture_utterance
+        from backend_client import post_voice_audio
+
+        try:
+            # 1. Chime — immediate feedback that wake word was heard
+            self.title = ICON_LISTENING
+            play_chime()
+
+            # 2. Capture utterance with VAD
+            audio_bytes = capture_utterance(self._config.audio_device_index)
+            if audio_bytes is None:
+                # No speech in 3s — play cancelled tone and return to idle
+                play_cancelled()
+                self.title = ICON_IDLE
+                return
+
+            # 3. POST to backend
+            self.title = ICON_PROCESSING
+            mp3_bytes = post_voice_audio(
+                audio_pcm_bytes=audio_bytes,
+                backend_url=self._config.backend_url,
+                auth_token=self._config.auth_token,
+            )
+
+            # 4. Play response
+            self.title = ICON_IDLE
+            play_audio_response(mp3_bytes)
+
+        except Exception as exc:
+            logger.error("Voice pipeline failed: %s", exc)
+            self.title = ICON_ERROR
+            time.sleep(3)  # show error briefly
+            self.title = ICON_IDLE
 
     @rumps.clicked("Pause Wake Word")
     def toggle_pause(self, sender):
