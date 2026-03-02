@@ -39,3 +39,4 @@ requests>=2.31
 # Free-tier provider alternatives (Phase 5)
 sentence-transformers>=3.0       # Local embeddings (EMBEDDING_PROVIDER=local, 384 dims, Turkish-native)
 google-generativeai>=0.8         # Gemini Flash free tier (LLM_PROVIDER=gemini)
+# Groq (LLM_PROVIDER=groq) uses the openai package above — no extra dependency needed

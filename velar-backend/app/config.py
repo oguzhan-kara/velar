@@ -38,6 +38,9 @@ class Settings(BaseSettings):
     # Google AI (Gemini) — free at aistudio.google.com
     google_ai_api_key: str = ""
 
+    # Groq — free at console.groq.com (Llama 3.3 70B)
+    groq_api_key: str = ""
+
     # Local embedding model configuration
     embedding_model: str = "paraphrase-multilingual-MiniLM-L12-v2"  # 384 dims, Turkish-native
     embedding_dims: int = 384  # 384 for local/sentence-transformers, 1536 for openai

@@ -389,6 +389,169 @@ async def _run_anthropic_conversation(
 
 
 # ---------------------------------------------------------------------------
+# Groq (Llama 3.3 70B) conversation loop — free tier via OpenAI-compatible API
+# ---------------------------------------------------------------------------
+
+def _build_groq_tools() -> list:
+    """Convert TOOL_DEFINITIONS (Anthropic format) to OpenAI function-calling format.
+
+    Anthropic uses {name, description, input_schema}.
+    OpenAI/Groq uses {type: "function", function: {name, description, parameters}}.
+    The JSON Schema payload (input_schema / parameters) is identical.
+    """
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": tool["name"],
+                "description": tool["description"],
+                "parameters": tool["input_schema"],
+            },
+        }
+        for tool in TOOL_DEFINITIONS
+    ]
+
+
+async def _run_groq_conversation(
+    user_text: str,
+    history: list[dict] | None = None,
+    max_tokens: int = 512,
+    detected_language: str | None = None,
+    memory_context: str | None = None,
+    user_id: str | None = None,
+) -> str:
+    """Run a Groq Llama 3.3 70B conversation with active function-calling loop.
+
+    Uses the OpenAI-compatible Groq API (same SDK, different base_url).
+    Implements the same feature set as the Anthropic and Gemini paths:
+    - VELAR_SYSTEM_PROMPT personality
+    - Tool use via OpenAI function calling (same 4 tools)
+    - Language mirroring via detected_language hint
+    - Memory context injection with hallucination guard
+
+    Args:
+        user_text:         The current user message.
+        history:           Optional list of prior turns (role/content dicts).
+        max_tokens:        Max tokens for the response.
+        detected_language: Optional language code ("tr" or "en").
+        memory_context:    Optional formatted memory facts string.
+        user_id:           Optional user ID for tool context.
+
+    Returns:
+        The assistant's text response, optimized for TTS.
+
+    Raises:
+        HTTPException(503): GROQ_API_KEY is not configured.
+        HTTPException(502): Groq API returned an error.
+    """
+    import json
+    from openai import AsyncOpenAI
+
+    from app.config import settings
+
+    if not settings.groq_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Groq API key not configured (set GROQ_API_KEY)",
+        )
+
+    client = AsyncOpenAI(
+        api_key=settings.groq_api_key,
+        base_url="https://api.groq.com/openai/v1",
+    )
+
+    # Build system prompt — same structure as other providers
+    system = VELAR_SYSTEM_PROMPT
+
+    if memory_context and memory_context.strip():
+        system += (
+            "\n\n## [VELAR MEMORY — What I know about you]\n"
+            + memory_context
+            + "\n\n"
+            "[IMPORTANT: The above list is EVERYTHING I know about you. "
+            "If a fact is not listed above, I do NOT know it. "
+            "Do NOT claim facts about you that are not listed here. "
+            "When referencing a stored fact, be natural — do not say 'according to my memory'.]"
+        )
+
+    if detected_language:
+        lang_name = {"tr": "Turkish", "en": "English"}.get(detected_language, detected_language)
+        system += f"\n\n[Context: The user is speaking {lang_name}. Respond in {lang_name}.]"
+
+    # Build message history — truncate to last 10 turns
+    prior_turns: list[dict] = list(history or [])
+    if len(prior_turns) > 10:
+        prior_turns = prior_turns[-10:]
+
+    messages = (
+        [{"role": "system", "content": system}]
+        + prior_turns
+        + [{"role": "user", "content": user_text}]
+    )
+
+    groq_tools = _build_groq_tools()
+
+    try:
+        # Active function-calling loop — mirrors Anthropic tool_use loop
+        while True:
+            response = await client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
+                messages=messages,
+                tools=groq_tools,
+                tool_choice="auto",
+                max_tokens=max_tokens,
+            )
+
+            choice = response.choices[0]
+            message = choice.message
+
+            if choice.finish_reason == "tool_calls" and message.tool_calls:
+                # Append assistant message with tool_calls to history
+                messages.append(message)
+
+                # Execute each tool call and collect results
+                for tc in message.tool_calls:
+                    tool_name = tc.function.name
+                    try:
+                        tool_inputs = json.loads(tc.function.arguments)
+                    except json.JSONDecodeError:
+                        tool_inputs = {}
+
+                    try:
+                        result = await execute_tool(tool_name, tool_inputs, user_id)
+                    except Exception as exc:
+                        logger.warning("Tool %r failed: %s", tool_name, exc)
+                        result = f"I couldn't fetch that right now. ({exc})"
+
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "content": str(result),
+                    })
+                # Loop continues — Groq will synthesize response using tool results
+
+            else:
+                # No tool calls — return the text response
+                return message.content or "I couldn't process that request right now."
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        error_str = str(exc).lower()
+        if "api_key" in error_str or "api key" in error_str or "authentication" in error_str or "401" in error_str:
+            logger.error("Groq authentication failed: %s", exc)
+            raise HTTPException(
+                status_code=503,
+                detail="Groq API key not configured or invalid",
+            ) from exc
+        logger.error("Groq API error: %s", exc)
+        raise HTTPException(
+            status_code=502,
+            detail="Groq API error",
+        ) from exc
+
+
+# ---------------------------------------------------------------------------
 # Public entry point — dispatches to provider based on LLM_PROVIDER setting
 # ---------------------------------------------------------------------------
 
@@ -427,6 +590,15 @@ async def run_conversation(
 
     if provider == "anthropic":
         return await _run_anthropic_conversation(
+            user_text=user_text,
+            history=history,
+            max_tokens=max_tokens,
+            detected_language=detected_language,
+            memory_context=memory_context,
+            user_id=user_id,
+        )
+    elif provider == "groq":
+        return await _run_groq_conversation(
             user_text=user_text,
             history=history,
             max_tokens=max_tokens,
