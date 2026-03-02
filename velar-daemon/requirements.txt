@@ -1,0 +1,7 @@
+openwakeword==0.6.0
+sounddevice==0.5.5
+silero-vad==6.2.1
+rumps==0.4.0
+numpy>=1.26
+pydub>=0.25
+requests>=2.31
