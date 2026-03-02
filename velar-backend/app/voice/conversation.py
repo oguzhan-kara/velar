@@ -3,8 +3,10 @@
 Implements the reasoning stage of the voice pipeline: takes user text (from STT
 or direct text input) and returns a voice-optimized response via Claude Haiku.
 
-The tool-use scaffold is present but empty for Phase 2; Phase 4+ will add real
-tool definitions (calendar, reminders, weather, etc.) and a multi-turn loop.
+Phase 4: Active tool_use loop — Claude can invoke calendar, weather, reminders,
+and places tools. The loop runs until stop_reason == "end_turn", executing any
+tool calls in between. Tool failures return graceful fallback strings rather than
+crashing the loop.
 
 Usage:
     from app.voice.conversation import run_conversation
@@ -17,6 +19,8 @@ import logging
 
 import anthropic
 from fastapi import HTTPException
+
+from app.voice.tools.registry import TOOL_DEFINITIONS, execute_tool
 
 logger = logging.getLogger(__name__)
 
@@ -87,9 +91,14 @@ async def run_conversation(
     history: list[dict] | None = None,
     max_tokens: int = 512,
     detected_language: str | None = None,
-    memory_context: str | None = None,   # NEW in Phase 3
+    memory_context: str | None = None,   # Phase 3: relevant memory facts
+    user_id: str | None = None,          # Phase 4: for tool context (Phase 5+ user-scoped tools)
 ) -> str:
-    """Run a single Claude Haiku conversation turn and return the response text.
+    """Run a Claude Haiku conversation with active tool_use loop.
+
+    Passes TOOL_DEFINITIONS to Claude on every call. If Claude invokes tools,
+    executes them and loops until stop_reason == "end_turn". Tool failures
+    return graceful fallback strings and never crash the loop.
 
     Args:
         user_text:          The current user message (post-STT or raw text).
@@ -105,6 +114,7 @@ async def run_conversation(
                             get_relevant_facts() + facts_to_context_string(). When
                             provided, injected into the system prompt with hallucination
                             guard instructions. If None or empty, no memory block added.
+        user_id:            Optional user ID for tool context (used by Phase 5+ user-scoped tools).
 
     Returns:
         The assistant's text response, optimized for TTS.
@@ -143,17 +153,54 @@ async def run_conversation(
     client = _get_client()
 
     try:
-        response = await asyncio.to_thread(
-            client.messages.create,
-            model="claude-haiku-4-5-20251001",
-            system=system,
-            messages=messages,
-            max_tokens=max_tokens,
-            # Tool-use scaffold — Phase 4+ adds real tools here:
-            # tools=[...],
-            # When tools are added, check response.stop_reason == "tool_use"
-            # and handle tool calls in a loop until stop_reason == "end_turn".
-        )
+        # Phase 4: Active tool_use loop — runs until stop_reason == "end_turn"
+        while True:
+            response = await asyncio.to_thread(
+                client.messages.create,
+                model="claude-haiku-4-5-20251001",
+                system=system,
+                messages=messages,
+                max_tokens=max_tokens,
+                tools=TOOL_DEFINITIONS,
+            )
+
+            if response.stop_reason == "end_turn":
+                # Extract text response from content blocks
+                for block in response.content:
+                    if block.type == "text":
+                        return block.text
+                return ""  # fallback if no text block present
+
+            if response.stop_reason == "tool_use":
+                # Append Claude's response (containing tool_use blocks) to history
+                messages.append({"role": "assistant", "content": response.content})
+
+                # Execute each tool call and collect results
+                tool_results = []
+                for block in response.content:
+                    if block.type == "tool_use":
+                        try:
+                            result = await execute_tool(block.name, block.input, user_id)
+                        except Exception as exc:
+                            logger.warning(
+                                "Tool %r failed: %s", block.name, exc
+                            )
+                            result = f"I couldn't fetch that right now. ({exc})"
+                        tool_results.append({
+                            "type": "tool_result",
+                            "tool_use_id": block.id,
+                            "content": str(result),
+                        })
+
+                # Append tool results as user turn — Claude synthesizes voice response
+                messages.append({"role": "user", "content": tool_results})
+                # Loop continues — Claude will synthesize response using tool results
+
+            else:
+                # Unexpected stop_reason (e.g. "max_tokens", "stop_sequence") — bail gracefully
+                logger.warning("Unexpected stop_reason: %s", response.stop_reason)
+                return "I couldn't process that request right now."
+
     except anthropic.AuthenticationError as exc:
         logger.error("Anthropic authentication failed — API key may be missing or invalid: %s", exc)
         raise HTTPException(
@@ -166,5 +213,3 @@ async def run_conversation(
             status_code=502,
             detail="Claude API error",
         ) from exc
-
-    return response.content[0].text

@@ -82,8 +82,12 @@ class TestRunConversationErrors:
         """run_conversation returns the text from Claude's response content."""
         import app.voice.conversation as conv_module  # noqa: PLC0415
 
-        # Build a mock response matching the Anthropic SDK structure
+        # Build a mock response matching the Anthropic SDK structure.
+        # Phase 4: must set block.type = "text" explicitly — the tool loop checks
+        # block.type == "text" to extract the response text. MagicMock().type
+        # returns a new MagicMock (not "text"), causing the loop to return "".
         mock_content = MagicMock()
+        mock_content.type = "text"
         mock_content.text = "Merhaba! Size nasıl yardımcı olabilirim?"
 
         mock_response = MagicMock()

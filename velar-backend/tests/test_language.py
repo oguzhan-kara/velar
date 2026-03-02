@@ -30,6 +30,7 @@ class TestLanguageContextInjection:
         from app.voice.conversation import VELAR_SYSTEM_PROMPT  # noqa: PLC0415
 
         mock_content = MagicMock()
+        mock_content.type = "text"  # Phase 4: tool loop checks block.type == "text"
         mock_content.text = "Bugün hava oldukça güzel görünüyor."
 
         mock_response = MagicMock()
@@ -65,10 +66,12 @@ class TestLanguageContextInjection:
         from app.voice.conversation import VELAR_SYSTEM_PROMPT  # noqa: PLC0415
 
         mock_content = MagicMock()
+        mock_content.type = "text"  # Phase 4: tool loop checks block.type == "text"
         mock_content.text = "The weather looks lovely today."
 
         mock_response = MagicMock()
         mock_response.content = [mock_content]
+        mock_response.stop_reason = "end_turn"
 
         mock_client = MagicMock()
         mock_client.messages.create = MagicMock(return_value=mock_response)
@@ -95,10 +98,12 @@ class TestLanguageContextInjection:
         import app.voice.conversation as conv_module  # noqa: PLC0415
 
         mock_content = MagicMock()
+        mock_content.type = "text"  # Phase 4: tool loop checks block.type == "text"
         mock_content.text = "Bugün takviminde iki toplantı var."
 
         mock_response = MagicMock()
         mock_response.content = [mock_content]
+        mock_response.stop_reason = "end_turn"
 
         mock_client = MagicMock()
         mock_client.messages.create = MagicMock(return_value=mock_response)
@@ -127,10 +132,12 @@ class TestLanguageContextInjection:
         from app.voice.conversation import VELAR_SYSTEM_PROMPT  # noqa: PLC0415
 
         mock_content = MagicMock()
+        mock_content.type = "text"  # Phase 4: tool loop checks block.type == "text"
         mock_content.text = "Hello!"
 
         mock_response = MagicMock()
         mock_response.content = [mock_content]
+        mock_response.stop_reason = "end_turn"
 
         mock_client = MagicMock()
         mock_client.messages.create = MagicMock(return_value=mock_response)
@@ -161,10 +168,12 @@ class TestHistoryTruncation:
         import app.voice.conversation as conv_module  # noqa: PLC0415
 
         mock_content = MagicMock()
+        mock_content.type = "text"  # Phase 4: tool loop checks block.type == "text"
         mock_content.text = "Understood!"
 
         mock_response = MagicMock()
         mock_response.content = [mock_content]
+        mock_response.stop_reason = "end_turn"
 
         mock_client = MagicMock()
         mock_client.messages.create = MagicMock(return_value=mock_response)

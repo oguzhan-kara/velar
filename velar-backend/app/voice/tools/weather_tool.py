@@ -67,12 +67,14 @@ def _format_weather(data: dict) -> str:
 
 def _get_weather_sync() -> str:
     """Synchronous implementation — called via asyncio.to_thread."""
-    from app.config import settings  # lazy import — avoids startup validation
-
     now = time.time()
+    # Check cache BEFORE importing settings — allows tests to pre-populate cache
+    # without needing a valid .env file (no pydantic-settings ValidationError).
     if _cache["expires"] > now and _cache["data"] is not None:
         logger.debug("Weather cache hit (expires in %.0fs)", _cache["expires"] - now)
         return _format_weather(_cache["data"])
+
+    from app.config import settings  # lazy import — avoids startup validation (after cache check)
 
     api_key = settings.openweathermap_api_key
     if not api_key:

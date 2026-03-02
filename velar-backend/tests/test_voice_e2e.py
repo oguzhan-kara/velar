@@ -109,6 +109,7 @@ class TestChatEndpoint:
         fake_audio = b"fake-mp3-audio-bytes"
 
         mock_content = MagicMock()
+        mock_content.type = "text"  # Phase 4: tool loop checks block.type == "text"
         mock_content.text = "Bugün hava güzel!"
 
         mock_response = MagicMock()
@@ -146,10 +147,12 @@ class TestChatEndpoint:
         captured_messages = []
 
         mock_content = MagicMock()
+        mock_content.type = "text"  # Phase 4: tool loop checks block.type == "text"
         mock_content.text = "Evet, anlıyorum."
 
         mock_response = MagicMock()
         mock_response.content = [mock_content]
+        mock_response.stop_reason = "end_turn"
 
         def capture_create(**kwargs):
             captured_messages.extend(kwargs.get("messages", []))
