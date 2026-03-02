@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-02T16:59:55Z"
+last_updated: "2026-03-02T17:02:00Z"
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 10
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 4 of 7 (Mac Daemon and Integrations)
-Plan: 1 of 3 in current phase (COMPLETE)
-Status: Phase 4 in progress — 04-01 complete (daemon shell: rumps menu bar, openwakeword hey_jarvis onnx, DaemonConfig)
-Last activity: 2026-03-02 — Completed 04-01: velar-daemon shell with VelarDaemon, WakeWordListener, DaemonConfig
+Plan: 3 of 3 in current phase (COMPLETE)
+Status: Phase 4 complete — 04-01 (daemon shell), 04-02 (audio capture + backend POST), 04-03 (4 integration tools + tool loop) all done
+Last activity: 2026-03-02 — Completed 04-03: TOOL_DEFINITIONS (4 tools), execute_tool dispatcher, active tool_use loop in conversation.py, 5 unit tests, INTG-01 through INTG-04 satisfied
 
-Progress: [████████░░] 73%
+Progress: [█████████░] 82%
 
 ## Performance Metrics
 
@@ -43,10 +43,10 @@ Progress: [████████░░] 73%
 | 01-foundation | 2 | 7 min | 3.5 min |
 | 02-voice-pipeline | 3 | 17 min | 5.7 min |
 | 03-memory-system | 2 | 23 min | 11.5 min |
-| 04-mac-daemon | 1 | 5 min | 5 min |
+| 04-mac-daemon | 3 | 19 min | 6.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-03 (6 min), 03-01 (6 min), 03-02 (17 min), 04-01 (5 min)
+- Last 5 plans: 03-01 (6 min), 03-02 (17 min), 04-01 (5 min), 04-02 (7 min), 04-03 (7 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -96,6 +96,10 @@ Recent decisions affecting current work:
 - [04-01]: audio stream started only from application_will_finish_launching_, never __init__ — rumps deadlock prevention per research pitfall 2
 - [04-01]: _on_wake 2s placeholder deferred to Phase 04-02 which wires real audio capture + backend POST
 - [04-01]: paused flag uses atomic bool (no lock needed in CPython) — toggle from main thread, read from audio thread
+- [04-03]: registry.py wraps each tool call in try/except so individual tool failures return prose strings rather than raising exceptions that crash the loop
+- [04-03]: weather_tool defers settings import until after cache check — enables unit tests to pre-populate cache without needing a .env file
+- [04-03]: places_tool uses Google Places Text Search (searchText) instead of Nearby Search — Text Search supports keyword queries better
+- [04-03]: Existing tests updated to set mock_content.type = "text" and stop_reason = "end_turn" — required for new tool loop block.type check
 
 ### Pending Todos
 
@@ -113,5 +117,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 04-01-PLAN.md — velar-daemon shell with rumps menu bar, openwakeword hey_jarvis onnx detection, DaemonConfig, VOICE-01 + DEV-01 satisfied
+Stopped at: Completed 04-03-PLAN.md — 4 integration tools, tool_use loop activated, 5 unit tests, INTG-01 through INTG-04 satisfied. Phase 4 complete.
 Resume file: None

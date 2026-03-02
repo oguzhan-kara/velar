@@ -66,10 +66,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Integrations
 
-- [ ] **INTG-01**: VELAR reads the user's calendar events (Google Calendar or Apple Calendar)
-- [ ] **INTG-02**: VELAR fetches current weather and forecast for user's location
-- [ ] **INTG-03**: VELAR can set timers and reminders
-- [ ] **INTG-04**: VELAR queries nearby places via Google Places API or similar
+- [x] **INTG-01**: VELAR reads the user's calendar events (Google Calendar or Apple Calendar)
+- [x] **INTG-02**: VELAR fetches current weather and forecast for user's location
+- [x] **INTG-03**: VELAR can set timers and reminders
+- [x] **INTG-04**: VELAR queries nearby places via Google Places API or similar
 
 ### Language
 
@@ -141,10 +141,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | SYNC-01 | Phase 6 | Pending |
 | SYNC-02 | Phase 1 | Complete |
 | SYNC-03 | Phase 5 | Pending |
-| INTG-01 | Phase 4 | Pending |
-| INTG-02 | Phase 4 | Pending |
-| INTG-03 | Phase 4 | Pending |
-| INTG-04 | Phase 4 | Pending |
+| INTG-01 | Phase 4 | Complete |
+| INTG-02 | Phase 4 | Complete |
+| INTG-03 | Phase 4 | Complete |
+| INTG-04 | Phase 4 | Complete |
 | LANG-01 | Phase 2 | Complete |
 | LANG-02 | Phase 2 | Complete |
 | LANG-03 | Phase 2 | Complete |
