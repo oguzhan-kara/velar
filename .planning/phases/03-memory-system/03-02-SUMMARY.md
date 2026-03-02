@@ -163,6 +163,15 @@ Each task was committed atomically:
 - Phase 4 (Tool Use: calendar, reminders) can use memory context from `get_relevant_facts()` for proactive tool suggestions
 - Supabase HNSW migration (from 03-01) must still be applied to cloud before memory endpoints are usable in production
 
+## Self-Check: PASSED
+
+All created files verified on disk. All 5 task commits verified in git history:
+- `64cf2d5` — feat(03-02): memory schemas, service layer, and extraction pipeline
+- `aad2091` — feat(03-02): memory CRUD API router and main.py registration
+- `1b23d9b` — feat(03-02): integrate memory retrieval into conversation and voice router
+- `1a2ae81` — test(03-02): memory extraction and API test suites — 17 tests
+- `c360f8d` — docs(03-02): complete plan metadata
+
 ---
 *Phase: 03-memory-system*
 *Completed: 2026-03-02*
