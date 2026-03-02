@@ -67,10 +67,12 @@ class TestRunConversationErrors:
                 )
             )
 
+            # Call _run_anthropic_conversation directly — this is what the test exercises.
+            # run_conversation() now dispatches to Gemini by default; _run_anthropic_conversation
+            # is the internal Anthropic path that maps AuthenticationError -> HTTPException(503).
             with patch.object(conv_module, "_get_client", return_value=mock_client):
                 with pytest.raises(HTTPException) as exc_info:
-                    from app.voice.conversation import run_conversation  # noqa: PLC0415
-                    await run_conversation("test input")
+                    await conv_module._run_anthropic_conversation(user_text="test input")
 
             assert exc_info.value.status_code == 503
             assert "api key" in exc_info.value.detail.lower()
@@ -97,9 +99,10 @@ class TestRunConversationErrors:
         mock_client = MagicMock()
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
+        # Call _run_anthropic_conversation directly to test the Anthropic path
+        # (run_conversation dispatches based on LLM_PROVIDER setting)
         with patch.object(conv_module, "_get_client", return_value=mock_client):
-            from app.voice.conversation import run_conversation  # noqa: PLC0415
-            result = await run_conversation(
+            result = await conv_module._run_anthropic_conversation(
                 user_text="Merhaba",
                 history=[],
             )

@@ -188,11 +188,17 @@ class TestGetRelevantFacts:
 # ---------------------------------------------------------------------------
 
 class TestGetEmbedding:
-    """get_embedding must assert exactly 1536 dimensions."""
+    """OpenAI embedding path must return 1536-dim vectors and assert dimensions.
+
+    These tests exercise _get_openai_embedding directly, since get_embedding()
+    dispatches to the local sentence-transformers path by default
+    (EMBEDDING_PROVIDER=local). The OpenAI path remains fully intact and
+    tested here via the internal _get_openai_embedding function.
+    """
 
     @pytest.mark.asyncio
     async def test_returns_1536_dimensional_vector(self):
-        from app.memory.embeddings import get_embedding
+        from app.memory.embeddings import _get_openai_embedding  # noqa: PLC0415
 
         mock_response = MagicMock()
         mock_response.data = [MagicMock(embedding=[0.1] * 1536)]
@@ -201,7 +207,7 @@ class TestGetEmbedding:
         mock_client.embeddings.create.return_value = mock_response
 
         with patch("app.memory.embeddings._get_openai_client", return_value=mock_client):
-            result = await get_embedding("I am allergic to nuts")
+            result = await _get_openai_embedding("I am allergic to nuts")
 
         assert len(result) == 1536
         assert result[0] == pytest.approx(0.1)
@@ -209,7 +215,7 @@ class TestGetEmbedding:
     @pytest.mark.asyncio
     async def test_raises_on_wrong_dimension(self):
         """If OpenAI returns wrong dimension, AssertionError is raised."""
-        from app.memory.embeddings import get_embedding
+        from app.memory.embeddings import _get_openai_embedding  # noqa: PLC0415
 
         mock_response = MagicMock()
         mock_response.data = [MagicMock(embedding=[0.1] * 512)]  # wrong!
@@ -219,16 +225,16 @@ class TestGetEmbedding:
 
         with patch("app.memory.embeddings._get_openai_client", return_value=mock_client):
             with pytest.raises(AssertionError):
-                await get_embedding("test text")
+                await _get_openai_embedding("test text")
 
     @pytest.mark.asyncio
     async def test_raises_runtime_error_on_api_failure(self):
         """API failure is wrapped in RuntimeError."""
-        from app.memory.embeddings import get_embedding
+        from app.memory.embeddings import _get_openai_embedding  # noqa: PLC0415
 
         mock_client = AsyncMock()
         mock_client.embeddings.create.side_effect = Exception("connection timeout")
 
         with patch("app.memory.embeddings._get_openai_client", return_value=mock_client):
             with pytest.raises(RuntimeError, match="Embedding failed"):
-                await get_embedding("test text")
+                await _get_openai_embedding("test text")

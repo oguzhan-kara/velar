@@ -45,6 +45,10 @@ def _inject_full_mock_config() -> MagicMock:
     mock_settings.whisper_model_size = "large-v3-turbo"
     mock_settings.environment = "test"
     mock_settings.debug = False
+    # Phase 5: force Anthropic provider so tests that mock _get_client work unchanged
+    mock_settings.llm_provider = "anthropic"
+    mock_settings.tts_provider = "edge"
+    mock_settings.embedding_provider = "local"
 
     mock_config_module = types.ModuleType("app.config")
     mock_config_module.settings = mock_settings
@@ -214,7 +218,7 @@ class TestMemoryHallucinationGuard:
         """When memory_context is provided, hallucination guard text appears in system."""
         import asyncio
         from unittest.mock import MagicMock, patch
-        from app.voice.conversation import run_conversation
+        import app.voice.conversation as conv_module  # noqa: PLC0415
 
         captured_system = []
 
@@ -222,14 +226,18 @@ class TestMemoryHallucinationGuard:
             captured_system.append(kwargs.get("system", ""))
             mock_resp = MagicMock()
             mock_resp.content = [MagicMock(text="Test response")]
+            mock_resp.stop_reason = "end_turn"
             return mock_resp
 
         mock_client = MagicMock()
         mock_client.messages.create.side_effect = capture_create
 
-        with patch("app.voice.conversation._get_client", return_value=mock_client):
+        # Use _run_anthropic_conversation directly — run_conversation dispatches
+        # to Gemini by default; the hallucination guard is provider-agnostic
+        # (same logic in both paths) and tested here via the Anthropic path.
+        with patch.object(conv_module, "_get_client", return_value=mock_client):
             asyncio.get_event_loop().run_until_complete(
-                run_conversation(
+                conv_module._run_anthropic_conversation(
                     user_text="What are my allergies?",
                     memory_context="- [health] allergy: nuts (id:12345678-1234-5678-1234-567812345678)",
                 )
@@ -244,7 +252,7 @@ class TestMemoryHallucinationGuard:
         """When memory_context is None, no VELAR MEMORY block in system prompt."""
         import asyncio
         from unittest.mock import MagicMock, patch
-        from app.voice.conversation import run_conversation
+        import app.voice.conversation as conv_module  # noqa: PLC0415
 
         captured_system = []
 
@@ -252,14 +260,15 @@ class TestMemoryHallucinationGuard:
             captured_system.append(kwargs.get("system", ""))
             mock_resp = MagicMock()
             mock_resp.content = [MagicMock(text="Test response")]
+            mock_resp.stop_reason = "end_turn"
             return mock_resp
 
         mock_client = MagicMock()
         mock_client.messages.create.side_effect = capture_create
 
-        with patch("app.voice.conversation._get_client", return_value=mock_client):
+        with patch.object(conv_module, "_get_client", return_value=mock_client):
             asyncio.get_event_loop().run_until_complete(
-                run_conversation(
+                conv_module._run_anthropic_conversation(
                     user_text="Hello!",
                     memory_context=None,
                 )

@@ -10,6 +10,11 @@ Tests verify:
 
 All tests run without a .env file — no real API keys required.
 Claude calls are mocked via unittest.mock.patch.
+
+Note: Tests that inspect the system prompt sent to Claude call
+_run_anthropic_conversation directly. run_conversation() dispatches
+to Gemini by default (LLM_PROVIDER=gemini); the Anthropic path remains
+fully testable via the internal _run_anthropic_conversation function.
 """
 
 import pytest
@@ -21,7 +26,7 @@ from unittest.mock import MagicMock, patch, AsyncMock
 # ---------------------------------------------------------------------------
 
 class TestLanguageContextInjection:
-    """Verify run_conversation appends correct language context to system prompt."""
+    """Verify _run_anthropic_conversation appends correct language context to system prompt."""
 
     @pytest.mark.asyncio
     async def test_turkish_response_from_claude(self):
@@ -41,8 +46,7 @@ class TestLanguageContextInjection:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(conv_module, "_get_client", return_value=mock_client):
-            from app.voice.conversation import run_conversation  # noqa: PLC0415
-            result = await run_conversation(
+            result = await conv_module._run_anthropic_conversation(
                 user_text="Bugün hava nasıl?",
                 detected_language="tr",
             )
@@ -77,8 +81,7 @@ class TestLanguageContextInjection:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(conv_module, "_get_client", return_value=mock_client):
-            from app.voice.conversation import run_conversation  # noqa: PLC0415
-            result = await run_conversation(
+            result = await conv_module._run_anthropic_conversation(
                 user_text="What's the weather today?",
                 detected_language="en",
             )
@@ -111,8 +114,7 @@ class TestLanguageContextInjection:
         # STT would detect Turkish as dominant for "VELAR, bugün calendar'da ne var?"
         # and pass detected_language="tr" to run_conversation
         with patch.object(conv_module, "_get_client", return_value=mock_client):
-            from app.voice.conversation import run_conversation  # noqa: PLC0415
-            await run_conversation(
+            await conv_module._run_anthropic_conversation(
                 user_text="VELAR, bugün calendar'da ne var?",
                 detected_language="tr",
             )
@@ -143,8 +145,7 @@ class TestLanguageContextInjection:
         mock_client.messages.create = MagicMock(return_value=mock_response)
 
         with patch.object(conv_module, "_get_client", return_value=mock_client):
-            from app.voice.conversation import run_conversation  # noqa: PLC0415
-            await run_conversation(user_text="hello")
+            await conv_module._run_anthropic_conversation(user_text="hello")
 
         call_kwargs = mock_client.messages.create.call_args.kwargs
         system_sent = call_kwargs["system"]
@@ -185,8 +186,7 @@ class TestHistoryTruncation:
         ]
 
         with patch.object(conv_module, "_get_client", return_value=mock_client):
-            from app.voice.conversation import run_conversation  # noqa: PLC0415
-            await run_conversation(
+            await conv_module._run_anthropic_conversation(
                 user_text="latest",
                 history=long_history,
             )

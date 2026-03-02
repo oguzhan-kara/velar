@@ -30,23 +30,42 @@ from httpx import AsyncClient, ASGITransport
 # ---------------------------------------------------------------------------
 
 def _inject_mock_config() -> None:
-    """Inject minimal mock app.config so the app can be imported without .env."""
-    if "app.config" not in sys.modules or not isinstance(
-        sys.modules["app.config"], types.ModuleType
-    ):
-        mock_settings = MagicMock()
-        mock_settings.anthropic_api_key = "test-key"
-        mock_settings.elevenlabs_api_key = ""
-        mock_settings.supabase_url = "https://test.supabase.co"
-        mock_settings.supabase_anon_key = "test-anon"
-        mock_settings.supabase_jwt_secret = "test-jwt-secret-that-is-long-enough-32chars"
-        mock_settings.database_url = "postgresql+asyncpg://test:test@localhost/test"
-        mock_settings.whisper_model_size = "large-v3-turbo"
-        mock_settings.debug = True
+    """Inject minimal mock app.config so the app can be imported without .env.
 
-        mock_config_module = types.ModuleType("app.config")
-        mock_config_module.settings = mock_settings
-        sys.modules["app.config"] = mock_config_module
+    Always sets the required fields — even if app.config is already in sys.modules
+    from a prior test file. This prevents test-ordering contamination where another
+    test file's mock omits llm_provider and the dispatcher picks the wrong branch.
+    """
+    existing = sys.modules.get("app.config")
+    if existing is not None and isinstance(existing, types.ModuleType):
+        # Patch missing provider fields onto the already-injected settings mock
+        s = getattr(existing, "settings", None)
+        if s is not None:
+            if not isinstance(getattr(s, "llm_provider", None), str):
+                s.llm_provider = "anthropic"
+            if not isinstance(getattr(s, "tts_provider", None), str):
+                s.tts_provider = "edge"
+            if not isinstance(getattr(s, "embedding_provider", None), str):
+                s.embedding_provider = "local"
+        return
+
+    mock_settings = MagicMock()
+    mock_settings.anthropic_api_key = "test-key"
+    mock_settings.elevenlabs_api_key = ""
+    mock_settings.supabase_url = "https://test.supabase.co"
+    mock_settings.supabase_anon_key = "test-anon"
+    mock_settings.supabase_jwt_secret = "test-jwt-secret-that-is-long-enough-32chars"
+    mock_settings.database_url = "postgresql+asyncpg://test:test@localhost/test"
+    mock_settings.whisper_model_size = "large-v3-turbo"
+    mock_settings.debug = True
+    # Phase 5: force Anthropic provider so tests that mock _get_client work unchanged
+    mock_settings.llm_provider = "anthropic"
+    mock_settings.tts_provider = "edge"
+    mock_settings.embedding_provider = "local"
+
+    mock_config_module = types.ModuleType("app.config")
+    mock_config_module.settings = mock_settings
+    sys.modules["app.config"] = mock_config_module
 
 
 # ---------------------------------------------------------------------------
