@@ -100,6 +100,11 @@ Recent decisions affecting current work:
 - [04-03]: weather_tool defers settings import until after cache check — enables unit tests to pre-populate cache without needing a .env file
 - [04-03]: places_tool uses Google Places Text Search (searchText) instead of Nearby Search — Text Search supports keyword queries better
 - [04-03]: Existing tests updated to set mock_content.type = "text" and stop_reason = "end_turn" — required for new tool loop block.type check
+- [04-02]: _run_voice_pipeline on separate thread — _on_wake returns from listener thread immediately so WakeWordListener resets and can detect next wake word
+- [04-02]: Silero VAD model loaded once at audio_capture module level — not per-capture, avoids ~300ms load overhead per utterance
+- [04-02]: WAV header wrapping via stdlib wave module before multipart POST — faster-whisper requires decodable audio format
+- [04-02]: launchd plist uses 3 __PLACEHOLDER__ markers substituted by install.sh sed — avoids hardcoding absolute paths in version-controlled files
+- [04-02]: ICON_ERROR shows for 3s on pipeline exception then auto-resets to ICON_IDLE — user sees feedback without requiring restart
 
 ### Pending Todos
 
@@ -117,5 +122,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 04-03-PLAN.md — 4 integration tools, tool_use loop activated, 5 unit tests, INTG-01 through INTG-04 satisfied. Phase 4 complete.
+Stopped at: Executing 04-02-PLAN.md — Tasks 1+2 complete (chime.py, audio_capture.py, backend_client.py, config.py auth_token, daemon.py pipeline, launchd plist, install.sh). Stopped at Task 3 checkpoint: human-verify on macOS hardware.
 Resume file: None
