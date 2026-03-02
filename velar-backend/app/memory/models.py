@@ -7,8 +7,18 @@ The memory_facts table was created in Phase 1 migration with:
 - RLS policy: users manage only their own facts
 
 This ORM class maps to that table. No migrations are added here.
+
+Phase 5: The embedding column dimension is driven by EMBEDDING_PROVIDER env var:
+- EMBEDDING_PROVIDER=local  (default): Vector(384) — sentence-transformers
+- EMBEDDING_PROVIDER=openai:            Vector(1536) — OpenAI text-embedding-3-small
+
+SQLAlchemy requires a fixed dimension at class definition time, so we read
+EMBEDDING_PROVIDER from os.environ directly (before settings is imported) to set
+the correct dimension. Run the 20260302000002_embeddings_384dim.sql migration
+before switching providers if there is existing data.
 """
 
+import os
 import uuid
 from datetime import datetime
 from typing import Optional
@@ -20,6 +30,13 @@ from pgvector.sqlalchemy import Vector
 
 # TIMESTAMP with timezone — pgvector/SA standard alias for TIMESTAMPTZ
 TIMESTAMPTZ = TIMESTAMP(timezone=True)
+
+# Resolve embedding dimension from env var at module load time.
+# This must happen before the MemoryFact class body is evaluated by Python,
+# since SQLAlchemy reads the mapped_column() call at class definition time.
+# Default: 384 (local sentence-transformers). Set EMBEDDING_PROVIDER=openai for 1536.
+_EMBEDDING_PROVIDER = os.environ.get("EMBEDDING_PROVIDER", "local").lower()
+_EMBEDDING_DIMS = 1536 if _EMBEDDING_PROVIDER == "openai" else 384
 
 
 class Base(DeclarativeBase):
@@ -42,9 +59,10 @@ class MemoryFact(Base):
     confidence: Mapped[float] = mapped_column(Float, nullable=False, default=1.0)
     # Claude-extracted: 0.7 (implied) to 0.85 (clearly stated)
     # User-stated (explicit source): 1.0
-    embedding: Mapped[Optional[list]] = mapped_column(Vector(1536), nullable=True)
-    # embedding may be NULL if the OpenAI embedding call failed at store time.
+    embedding: Mapped[Optional[list]] = mapped_column(Vector(_EMBEDDING_DIMS), nullable=True)
+    # embedding may be NULL if the embedding call failed at store time.
     # Facts with NULL embedding are stored but excluded from semantic search.
+    # Dimension: 384 (EMBEDDING_PROVIDER=local) or 1536 (EMBEDDING_PROVIDER=openai).
     valid_from: Mapped[datetime] = mapped_column(
         TIMESTAMPTZ, server_default=text("now()"), nullable=False
     )
