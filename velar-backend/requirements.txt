@@ -28,3 +28,10 @@ editdistance>=0.6
 pgvector
 openai>=1.0
 tiktoken
+
+# Integration tools (Phase 4)
+google-auth-oauthlib>=1.0
+google-api-python-client>=2.100
+google-auth-httplib2>=0.2
+keyring>=25.0
+requests>=2.31

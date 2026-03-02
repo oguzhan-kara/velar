@@ -20,5 +20,12 @@ class Settings(BaseSettings):
     # Memory system (Phase 3)
     openai_api_key: str = ""  # Required for embeddings; empty = memory endpoints fail
 
+    # Integration tools (Phase 4)
+    google_calendar_credentials_path: str = "~/.velar/google_credentials.json"
+    openweathermap_api_key: str = ""   # One Call by Call subscription required
+    weather_city: str = "Istanbul"     # User's city for weather/places (set once)
+    google_places_api_key: str = ""    # Places API (New) key
+    places_city: str = "Istanbul"      # City for place searches
+
 
 settings = Settings()
