@@ -19,8 +19,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **MEM-01**: VELAR stores personal facts about the user permanently (health, preferences, relationships, habits)
 - [x] **MEM-02**: User can ask VELAR what it knows about them and get accurate recall
-- [ ] **MEM-03**: VELAR passively extracts facts from every conversation without explicit user action
-- [ ] **MEM-04**: User can correct or delete facts VELAR has stored
+- [x] **MEM-03**: VELAR passively extracts facts from every conversation without explicit user action
+- [x] **MEM-04**: User can correct or delete facts VELAR has stored
 - [x] **MEM-05**: Memory persists across devices and sessions via cloud sync
 
 ### Proactive Engine
@@ -115,8 +115,8 @@ Deferred to future release. Tracked but not in current roadmap.
 | VOICE-05 | Phase 2 | Complete |
 | MEM-01 | Phase 3 | Complete |
 | MEM-02 | Phase 3 | Complete |
-| MEM-03 | Phase 3 | Pending |
-| MEM-04 | Phase 3 | Pending |
+| MEM-03 | Phase 3 | Complete |
+| MEM-04 | Phase 3 | Complete |
 | MEM-05 | Phase 3 | Complete |
 | PROACT-01 | Phase 5 | Pending |
 | PROACT-02 | Phase 5 | Pending |

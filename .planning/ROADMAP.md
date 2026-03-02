@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Backend, Supabase, auth, security, and cloud data layer (completed 2026-03-01)
 - [x] **Phase 2: Voice Pipeline** - STT, TTS, Claude tool loop, and bilingual language support (completed 2026-03-02)
-- [ ] **Phase 3: Memory System** - Personal knowledge graph with semantic retrieval
+- [x] **Phase 3: Memory System** - Personal knowledge graph with semantic retrieval (completed 2026-03-02)
 - [ ] **Phase 4: Mac Daemon and Integrations** - Always-on Mac service, wake word, and external data tools
 - [ ] **Phase 5: Proactive Engine** - Morning briefing, push notifications, and proactive scheduling
 - [ ] **Phase 6: iPhone App** - Flutter mobile client with voice, chat, sync, and push
@@ -143,7 +143,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete    | 2026-03-01 |
 | 2. Voice Pipeline | 3/3 | Complete    | 2026-03-02 |
-| 3. Memory System | 1/2 | In progress | - |
+| 3. Memory System | 2/2 | Complete   | 2026-03-02 |
 | 4. Mac Daemon and Integrations | 0/2 | Not started | - |
 | 5. Proactive Engine | 0/2 | Not started | - |
 | 6. iPhone App | 0/2 | Not started | - |

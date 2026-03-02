@@ -23,16 +23,16 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 3 of 7 (Memory System)
-Plan: 1 of 3 in current phase (COMPLETE)
-Status: Phase 3 in progress — 03-01 complete (pgvector infra + embedding service + semantic retrieval)
-Last activity: 2026-03-02 — Completed 03-01: pgvector codec, HNSW migration, OpenAI embeddings, 11 tests green
+Plan: 2 of 3 in current phase (COMPLETE)
+Status: Phase 3 in progress — 03-01 + 03-02 complete (full memory system: extraction, service, CRUD API, conversation integration)
+Last activity: 2026-03-02 — Completed 03-02: background extraction, /memory CRUD API, hallucination guard, 17 tests green
 
-Progress: [██████░░░░] 57%
+Progress: [███████░░░] 64%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 5 min
 - Total execution time: 0.50 hours
 
@@ -42,10 +42,10 @@ Progress: [██████░░░░] 57%
 |-------|-------|-------|----------|
 | 01-foundation | 2 | 7 min | 3.5 min |
 | 02-voice-pipeline | 3 | 17 min | 5.7 min |
-| 03-memory-system | 1 | 6 min | 6 min |
+| 03-memory-system | 2 | 23 min | 11.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (4 min), 02-01 (5 min), 02-02 (6 min), 02-03 (6 min), 03-01 (6 min)
+- Last 5 plans: 02-01 (5 min), 02-02 (6 min), 02-03 (6 min), 03-01 (6 min), 03-02 (17 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -86,6 +86,11 @@ Recent decisions affecting current work:
 - [03-01]: Token cap at 1800 not 2000 — 10% safety margin absorbs tiktoken/Claude tokenizer divergence on Turkish text
 - [03-01]: HNSW index preferred over IVFFlat — HNSW works on empty table at start; IVFFlat requires data before creation
 - [03-01]: Active-only filter always via ORM (valid_until IS NULL AND superseded_by IS NULL) — never query active_memory_facts view from Python
+- [03-02]: output_config (not output_format) for Claude Haiku structured JSON output — GA API, no beta headers required
+- [03-02]: Background task store_extracted_facts creates own AsyncSession via async_session_factory() — request-scoped session is closed before background task runs
+- [03-02]: Cosine similarity threshold 0.92 for contradiction detection — supersede instead of duplicate insert
+- [03-02]: voice_endpoint gets background extraction but NOT memory retrieval — streaming pipeline refactor deferred
+- [03-02]: Test config mock: force-set sys.modules['app.config'] with complete settings in each test — prevents MagicMock URL errors from test ordering conflicts
 
 ### Pending Todos
 
@@ -103,5 +108,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 03-01-PLAN.md — pgvector infrastructure, embedding service, semantic retrieval, 11 tests green
+Stopped at: Completed 03-02-PLAN.md — background extraction, /memory CRUD API, hallucination guard, 17 tests, MEM-01 through MEM-05 satisfied
 Resume file: None
