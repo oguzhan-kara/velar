@@ -67,7 +67,7 @@ Plans:
 **Plans**: TBD
 
 Plans:
-- [ ] 03-01: Supabase schema (entity-attribute-value triples), pgvector embeddings, and semantic retrieval with 2000-token cap
+- [x] 03-01: pgvector HNSW index, AsyncOpenAI embedding service (text-embedding-3-small 1536-dim), SQLAlchemy MemoryFact ORM, semantic retrieval with 1800-token cap (completed 2026-03-02)
 - [ ] 03-02: Async memory extraction pipeline, fact versioning (supersede pattern), hallucination guard, and /memory CRUD API
 
 ### Phase 4: Mac Daemon and Integrations
@@ -143,7 +143,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete    | 2026-03-01 |
 | 2. Voice Pipeline | 3/3 | Complete    | 2026-03-02 |
-| 3. Memory System | 0/2 | Not started | - |
+| 3. Memory System | 1/2 | In progress | - |
 | 4. Mac Daemon and Integrations | 0/2 | Not started | - |
 | 5. Proactive Engine | 0/2 | Not started | - |
 | 6. iPhone App | 0/2 | Not started | - |

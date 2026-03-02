@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-last_updated: "2026-03-02T14:31:38.251Z"
+status: in_progress
+last_updated: "2026-03-02T15:26:00Z"
 progress:
-  total_phases: 2
+  total_phases: 7
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 8
+  completed_plans: 6
 ---
 
 # Project State
@@ -18,23 +18,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** VELAR thinks ahead for you — it anticipates what you need before you realize it yourself.
-**Current focus:** Phase 2 — Voice Pipeline
+**Current focus:** Phase 3 — Memory System
 
 ## Current Position
 
-Phase: 2 of 7 (Voice Pipeline)
-Plan: 3 of 3 in current phase (COMPLETE)
-Status: Phase 2 COMPLETE — all 3 plans executed, language pipeline + streaming ready
-Last activity: 2026-03-02 — Completed 02-03: language intelligence, sentence-boundary streaming, 35 Phase 2 tests green
+Phase: 3 of 7 (Memory System)
+Plan: 1 of 3 in current phase (COMPLETE)
+Status: Phase 3 in progress — 03-01 complete (pgvector infra + embedding service + semantic retrieval)
+Last activity: 2026-03-02 — Completed 03-01: pgvector codec, HNSW migration, OpenAI embeddings, 11 tests green
 
-Progress: [█████░░░░░] 43%
+Progress: [██████░░░░] 57%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 4.5 min
-- Total execution time: 0.30 hours
+- Total plans completed: 6
+- Average duration: 5 min
+- Total execution time: 0.50 hours
 
 **By Phase:**
 
@@ -42,9 +42,10 @@ Progress: [█████░░░░░] 43%
 |-------|-------|-------|----------|
 | 01-foundation | 2 | 7 min | 3.5 min |
 | 02-voice-pipeline | 3 | 17 min | 5.7 min |
+| 03-memory-system | 1 | 6 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (5 min), 02-02 (6 min), 02-03 (6 min)
+- Last 5 plans: 01-02 (4 min), 02-01 (5 min), 02-02 (6 min), 02-03 (6 min), 03-01 (6 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -80,6 +81,11 @@ Recent decisions affecting current work:
 - [02-03]: SENTENCE_BOUNDARY_RE positive lookbehind (?<=[.!?]) keeps punctuation with sentence; whitespace after boundary consumed by split
 - [02-03]: _safe_header() percent-encodes non-latin-1 chars in StreamingResponse headers (Turkish chars break HTTP latin-1 restriction)
 - [02-03]: /voice uses sentence-boundary streaming pipeline; /chat stays sequential (JSON needs complete audio for base64 encoding)
+- [03-01]: TIMESTAMP(timezone=True) used instead of TIMESTAMPTZ — TIMESTAMPTZ is not exported from sqlalchemy.dialects.postgresql
+- [03-01]: cosine_distance is a comparator method on Vector columns (MemoryFact.embedding.cosine_distance(vec)), not a standalone import from pgvector.sqlalchemy
+- [03-01]: Token cap at 1800 not 2000 — 10% safety margin absorbs tiktoken/Claude tokenizer divergence on Turkish text
+- [03-01]: HNSW index preferred over IVFFlat — HNSW works on empty table at start; IVFFlat requires data before creation
+- [03-01]: Active-only filter always via ORM (valid_until IS NULL AND superseded_by IS NULL) — never query active_memory_facts view from Python
 
 ### Pending Todos
 
@@ -91,9 +97,11 @@ None yet.
 - [Pre-Phase 2]: Whisper large-v3 Turkish WER on code-switched speech needs an acceptance test before advancing from Phase 2 (scaffold ready in 02-01, audio fixtures needed)
 - [Pre-Phase 4]: openwakeword custom "Hey VELAR" wake word requires ~200 positive audio samples — scope decision needed (custom vs. generic trigger in v1)
 - [Pre-Phase 5]: APScheduler v4 API is a rewrite from v3 — verify correct API surface before Phase 5 planning
+- [03-01]: HNSW migration 20260302000001_memory_hnsw_index.sql must be applied to Supabase cloud before memory endpoints are usable
+- [03-01]: anthropic and soundfile packages not installed in current venv — run pip install -r requirements.txt before Phase 2/3 integration tests
 
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 02-03-PLAN.md — language intelligence, sentence-boundary streaming, full Phase 2 test suite green
+Stopped at: Completed 03-01-PLAN.md — pgvector infrastructure, embedding service, semantic retrieval, 11 tests green
 Resume file: None
