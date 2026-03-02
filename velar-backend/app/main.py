@@ -9,6 +9,7 @@ from app.config import settings
 from app.health.router import router as health_router
 from app.auth.router import router as auth_router
 from app.users.router import router as users_router
+from app.voice.router import router as voice_router
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,13 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.error(f"Database connectivity check failed: {exc}")
         # Allow startup to continue — DB may be temporarily unavailable
+
+    # Log configured STT model (does NOT load the Whisper model — stays lazy until first request)
+    try:
+        logger.info(f"STT service configured: model={settings.whisper_model_size} (loads on first request)")
+    except Exception as e:
+        logger.warning(f"STT service not available: {e} — voice endpoints will fail")
+
     yield
     # Shutdown: nothing to clean up for now
 
@@ -50,3 +58,4 @@ app.add_middleware(
 app.include_router(health_router)  # responds at /health
 app.include_router(auth_router, prefix="/api/v1/auth")
 app.include_router(users_router, prefix="/api/v1/users")
+app.include_router(voice_router, prefix="/api/v1")
