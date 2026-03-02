@@ -12,8 +12,13 @@ import io
 import logging
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.database import get_db
+from app.memory.retrieval import get_relevant_facts, facts_to_context_string
+from app.memory.service import store_extracted_facts
 
 
 def _safe_header(value: str) -> str:
@@ -43,6 +48,7 @@ router = APIRouter(tags=["voice"])
 
 @router.post("/voice")
 async def voice_endpoint(
+    background_tasks: BackgroundTasks,
     audio: UploadFile = File(...),
     current_user: CurrentUser = Depends(get_current_user),
 ) -> StreamingResponse:
@@ -116,6 +122,14 @@ async def voice_endpoint(
         logger.error("Streaming pipeline failed: %s", exc)
         raise HTTPException(status_code=500, detail="Voice pipeline failed") from exc
 
+    # Queue background fact extraction — runs after audio response is sent
+    background_tasks.add_task(
+        store_extracted_facts,
+        user_message=stt_result.text,
+        assistant_response=response_text,
+        user_id=current_user["user_id"],
+    )
+
     # 4. Stream MP3 audio with metadata headers
     # Header values are percent-encoded via _safe_header() to handle Turkish UTF-8
     # characters (ğ, ş, ı, ö, ü, ç) which are outside the latin-1 range that HTTP
@@ -134,7 +148,9 @@ async def voice_endpoint(
 @router.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(
     request: ChatRequest,
+    background_tasks: BackgroundTasks,
     current_user: CurrentUser = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db),
 ) -> ChatResponse:
     """Text-in, JSON-out chat endpoint (no STT step).
 
@@ -166,11 +182,16 @@ async def chat_endpoint(
         has_turkish_word = any(w in message_lower.split() for w in common_turkish)
         chat_lang = "tr" if (has_turkish_char or has_turkish_word) else "en"
 
+    # Retrieve relevant memory facts (Phase 3) — inject into system prompt
+    relevant_facts = await get_relevant_facts(session, current_user["user_id"], request.message)
+    memory_context = facts_to_context_string(relevant_facts)
+
     # 1. Claude conversation — raises 502/503 on failure
     response_text = await run_conversation(
         user_text=request.message,
         history=request.history,
         detected_language=chat_lang,
+        memory_context=memory_context,  # Phase 3 addition
     )
 
     # 2. TTS synthesis
@@ -186,6 +207,14 @@ async def chat_endpoint(
 
     # 3. Encode audio and return JSON response
     audio_base64 = base64.b64encode(audio_response).decode()
+
+    # Queue background fact extraction — runs after response is sent (non-blocking)
+    background_tasks.add_task(
+        store_extracted_facts,
+        user_message=request.message,
+        assistant_response=response_text,
+        user_id=current_user["user_id"],
+    )
 
     return ChatResponse(
         text=response_text,

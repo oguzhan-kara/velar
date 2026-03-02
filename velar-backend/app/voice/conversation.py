@@ -87,6 +87,7 @@ async def run_conversation(
     history: list[dict] | None = None,
     max_tokens: int = 512,
     detected_language: str | None = None,
+    memory_context: str | None = None,   # NEW in Phase 3
 ) -> str:
     """Run a single Claude Haiku conversation turn and return the response text.
 
@@ -95,12 +96,15 @@ async def run_conversation(
         history:            Optional list of prior turns:
                             [{"role": "user"|"assistant", "content": str}, ...]
                             Truncated to the last 10 turns before sending.
-                            Phase 3 will replace this with memory-backed context retrieval.
         max_tokens:         Maximum tokens for Claude's response (default 512 for voice).
         detected_language:  Optional language code ("tr" or "en") detected from STT or
                             heuristic. When provided, appends a language context note to
                             the system prompt so Claude responds in the correct language.
                             Do NOT modify VELAR_SYSTEM_PROMPT — always create a local copy.
+        memory_context:     Optional formatted string of relevant memory facts from
+                            get_relevant_facts() + facts_to_context_string(). When
+                            provided, injected into the system prompt with hallucination
+                            guard instructions. If None or empty, no memory block added.
 
     Returns:
         The assistant's text response, optimized for TTS.
@@ -109,14 +113,27 @@ async def run_conversation(
         HTTPException(502): Claude API returned an error.
         HTTPException(503): Anthropic API key is not configured.
     """
-    # Build language-aware system prompt without modifying the constant
+    # Build system prompt — never modify the VELAR_SYSTEM_PROMPT constant
     system = VELAR_SYSTEM_PROMPT
+
+    # Inject memory context with hallucination guard (Phase 3)
+    # The guard is CRITICAL: without it, Claude may invent facts it wasn't given.
+    if memory_context and memory_context.strip():
+        system += (
+            "\n\n## [VELAR MEMORY — What I know about you]\n"
+            + memory_context
+            + "\n\n"
+            "[IMPORTANT: The above list is EVERYTHING I know about you. "
+            "If a fact is not listed above, I do NOT know it. "
+            "Do NOT claim facts about you that are not listed here. "
+            "When referencing a stored fact, be natural — do not say 'according to my memory'.]"
+        )
+
     if detected_language:
         lang_name = {"tr": "Turkish", "en": "English"}.get(detected_language, detected_language)
         system += f"\n\n[Context: The user is speaking {lang_name}. Respond in {lang_name}.]"
 
     # Build messages: truncate history to last 10 turns, then append current input
-    # Phase 3 will replace this with memory-backed context retrieval.
     prior_turns: list[dict] = list(history or [])
     if len(prior_turns) > 10:
         prior_turns = prior_turns[-10:]
