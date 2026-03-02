@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables (secrets)
+.env
+.env.*
+!.env.example
+
+# Distribution / packaging
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Test artifacts
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude local settings
+.claude/
+
+# openwakeword downloaded models (re-downloaded on first run)
+velar-daemon/models/
+
+# Logs
+*.log
+logs/
+
+# Supabase local dev
+.supabase/
+supabase/.branches/
+supabase/.temp/
