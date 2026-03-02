@@ -1,10 +1,12 @@
 """Text-to-speech service for VELAR voice pipeline.
 
-Primary TTS: ElevenLabs (eleven_flash_v2_5, 75ms first-audio latency, 32 languages).
-Fallback TTS: Edge TTS (Microsoft Neural voices, free, natively async).
+Provider selection via TTS_PROVIDER env var:
+- "edge"       (default): Use Edge TTS directly — free, no API key required.
+- "elevenlabs": Use ElevenLabs primary with Edge TTS automatic fallback.
 
-The fallback activates automatically on any ElevenLabs failure:
-rate limit, network error, invalid API key, or key not configured.
+When TTS_PROVIDER=elevenlabs the fallback chain activates automatically on any
+ElevenLabs failure: rate limit, network error, invalid API key, or key not
+configured.
 
 Usage:
     from app.voice.tts import tts_service
@@ -46,7 +48,10 @@ EDGE_TTS_VOICE_EN = "en-US-GuyNeural"     # English male
 # ---------------------------------------------------------------------------
 
 class TTSService:
-    """TTS service with ElevenLabs primary and Edge TTS automatic fallback.
+    """TTS service supporting Edge TTS (free default) and ElevenLabs (paid).
+
+    TTS_PROVIDER=edge (default): Goes straight to Edge TTS, no ElevenLabs init.
+    TTS_PROVIDER=elevenlabs: Uses ElevenLabs primary with Edge TTS fallback.
 
     Instantiation is lightweight: just creates an HTTP client, no model loading.
     Safe to create at module level as a singleton.
@@ -54,23 +59,30 @@ class TTSService:
 
     def __init__(self) -> None:
         from app.config import settings  # lazy import — avoid startup validation
-        if settings.elevenlabs_api_key:
+        self._tts_provider = getattr(settings, "tts_provider", "edge")
+
+        if self._tts_provider == "elevenlabs" and settings.elevenlabs_api_key:
             try:
                 from elevenlabs import ElevenLabs
                 self._elevenlabs = ElevenLabs(api_key=settings.elevenlabs_api_key)
-                logger.info("ElevenLabs TTS client initialized.")
+                logger.info("ElevenLabs TTS client initialized (TTS_PROVIDER=elevenlabs).")
             except Exception as exc:
                 logger.warning("Failed to initialize ElevenLabs client: %s — using Edge TTS only.", exc)
                 self._elevenlabs = None
+        elif self._tts_provider == "elevenlabs" and not settings.elevenlabs_api_key:
+            logger.warning("TTS_PROVIDER=elevenlabs but no ELEVENLABS_API_KEY — using Edge TTS only.")
+            self._elevenlabs = None
         else:
-            logger.info("No ELEVENLABS_API_KEY — using Edge TTS only.")
+            # TTS_PROVIDER=edge (default): skip ElevenLabs entirely
+            logger.info("TTS_PROVIDER=%s — using Edge TTS directly.", self._tts_provider)
             self._elevenlabs = None
 
     async def synthesize(self, text: str, language: str = "tr") -> bytes:
         """Convert text to MP3 audio bytes.
 
-        Tries ElevenLabs first if configured. Falls back to Edge TTS on any
-        failure (rate limit, network error, auth error, empty key).
+        When TTS_PROVIDER=edge (default): goes straight to Edge TTS.
+        When TTS_PROVIDER=elevenlabs: tries ElevenLabs first, falls back to
+        Edge TTS on any failure (rate limit, network error, auth error, empty key).
 
         Args:
             text:     The text to synthesize. Turkish UTF-8 passed as-is.
