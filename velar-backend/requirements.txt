@@ -23,3 +23,8 @@ pydub>=0.25
 tenacity>=8.3
 python-multipart>=0.0.9
 editdistance>=0.6
+
+# Memory system (Phase 3)
+pgvector
+openai>=1.0
+tiktoken

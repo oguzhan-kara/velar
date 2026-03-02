@@ -17,5 +17,8 @@ class Settings(BaseSettings):
     elevenlabs_api_key: str = ""         # Required for ElevenLabs TTS; empty = Edge TTS only
     whisper_model_size: str = "large-v3-turbo"  # STT model size
 
+    # Memory system (Phase 3)
+    openai_api_key: str = ""  # Required for embeddings; empty = memory endpoints fail
+
 
 settings = Settings()
