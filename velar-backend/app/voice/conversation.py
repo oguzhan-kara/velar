@@ -86,15 +86,21 @@ async def run_conversation(
     user_text: str,
     history: list[dict] | None = None,
     max_tokens: int = 512,
+    detected_language: str | None = None,
 ) -> str:
     """Run a single Claude Haiku conversation turn and return the response text.
 
     Args:
-        user_text:  The current user message (post-STT or raw text).
-        history:    Optional list of prior turns:
-                    [{"role": "user"|"assistant", "content": str}, ...]
-                    Truncated to the last 10 turns before sending.
-        max_tokens: Maximum tokens for Claude's response (default 512 for voice).
+        user_text:          The current user message (post-STT or raw text).
+        history:            Optional list of prior turns:
+                            [{"role": "user"|"assistant", "content": str}, ...]
+                            Truncated to the last 10 turns before sending.
+                            Phase 3 will replace this with memory-backed context retrieval.
+        max_tokens:         Maximum tokens for Claude's response (default 512 for voice).
+        detected_language:  Optional language code ("tr" or "en") detected from STT or
+                            heuristic. When provided, appends a language context note to
+                            the system prompt so Claude responds in the correct language.
+                            Do NOT modify VELAR_SYSTEM_PROMPT — always create a local copy.
 
     Returns:
         The assistant's text response, optimized for TTS.
@@ -103,7 +109,14 @@ async def run_conversation(
         HTTPException(502): Claude API returned an error.
         HTTPException(503): Anthropic API key is not configured.
     """
+    # Build language-aware system prompt without modifying the constant
+    system = VELAR_SYSTEM_PROMPT
+    if detected_language:
+        lang_name = {"tr": "Turkish", "en": "English"}.get(detected_language, detected_language)
+        system += f"\n\n[Context: The user is speaking {lang_name}. Respond in {lang_name}.]"
+
     # Build messages: truncate history to last 10 turns, then append current input
+    # Phase 3 will replace this with memory-backed context retrieval.
     prior_turns: list[dict] = list(history or [])
     if len(prior_turns) > 10:
         prior_turns = prior_turns[-10:]
@@ -116,7 +129,7 @@ async def run_conversation(
         response = await asyncio.to_thread(
             client.messages.create,
             model="claude-haiku-4-5-20251001",
-            system=VELAR_SYSTEM_PROMPT,
+            system=system,
             messages=messages,
             max_tokens=max_tokens,
             # Tool-use scaffold — Phase 4+ adds real tools here:

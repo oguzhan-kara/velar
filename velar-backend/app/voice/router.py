@@ -72,17 +72,30 @@ async def voice_endpoint(
         stt_result.text[:80],
     )
 
+    # Short-utterance language fallback: low confidence + short text -> default to Turkish.
+    # Turkish is the primary user language (per CONTEXT.md). Short utterances (< 5 words)
+    # with low language_probability are prone to misdetection — safer to assume Turkish.
+    detected_lang = stt_result.language
+    if stt_result.language_probability < 0.8 and len(stt_result.text.split()) < 5:
+        logger.info(
+            "Low language confidence (%.2f) on short utterance (%d words), defaulting to Turkish",
+            stt_result.language_probability,
+            len(stt_result.text.split()),
+        )
+        detected_lang = "tr"
+
     # 3. Claude conversation — raises 502/503 on failure
     response_text = await run_conversation(
         user_text=stt_result.text,
         history=[],
+        detected_language=detected_lang,
     )
 
     # 4. TTS synthesis
     try:
         audio_response = await tts_service.synthesize(
             text=response_text,
-            language=stt_result.language,
+            language=detected_lang,
         )
     except Exception as exc:
         logger.error("TTS generation failed: %s", exc)
@@ -95,7 +108,7 @@ async def voice_endpoint(
         headers={
             "X-Transcript": stt_result.text,
             "X-Response-Text": response_text,
-            "X-Detected-Language": stt_result.language,
+            "X-Detected-Language": detected_lang,
         },
     )
 
@@ -117,14 +130,33 @@ async def chat_endpoint(
         503: Anthropic API key not configured
         500: TTS generation failed
     """
+    # /chat uses sequential pipeline — JSON response requires complete audio before returning.
+    # /voice uses streaming pipeline (stream_conversation_to_audio) for sub-4s latency.
+
+    # Determine language: use explicit override if provided, otherwise use simple heuristic.
+    # The heuristic is intentionally lightweight — Claude's system prompt is the primary
+    # language driver. The heuristic is just a hint to help Claude for ambiguous inputs.
+    if request.language:
+        chat_lang = request.language
+    else:
+        # Detect Turkish by checking for Turkish-specific characters or common words.
+        turkish_chars = set("ğşıöüçİĞŞ")
+        common_turkish = {"merhaba", "evet", "hayır", "tamam", "nasıl", "ne", "ve",
+                          "bir", "bu", "da", "de", "için", "ile"}
+        message_lower = request.message.lower()
+        has_turkish_char = any(c in turkish_chars for c in request.message)
+        has_turkish_word = any(w in message_lower.split() for w in common_turkish)
+        chat_lang = "tr" if (has_turkish_char or has_turkish_word) else "en"
+
     # 1. Claude conversation — raises 502/503 on failure
     response_text = await run_conversation(
         user_text=request.message,
         history=request.history,
+        detected_language=chat_lang,
     )
 
     # 2. TTS synthesis
-    language = request.language or "tr"
+    language = chat_lang
     try:
         audio_response = await tts_service.synthesize(
             text=response_text,
