@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-last_updated: "2026-03-02T15:54:09.122Z"
+last_updated: "2026-03-02T16:59:55Z"
 progress:
-  total_phases: 3
+  total_phases: 7
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 8
+  completed_plans: 8
 ---
 
 # Project State
@@ -18,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** VELAR thinks ahead for you — it anticipates what you need before you realize it yourself.
-**Current focus:** Phase 3 — Memory System
+**Current focus:** Phase 4 — Mac Daemon
 
 ## Current Position
 
-Phase: 3 of 7 (Memory System)
-Plan: 2 of 3 in current phase (COMPLETE)
-Status: Phase 3 in progress — 03-01 + 03-02 complete (full memory system: extraction, service, CRUD API, conversation integration)
-Last activity: 2026-03-02 — Completed 03-02: background extraction, /memory CRUD API, hallucination guard, 17 tests green
+Phase: 4 of 7 (Mac Daemon and Integrations)
+Plan: 1 of 3 in current phase (COMPLETE)
+Status: Phase 4 in progress — 04-01 complete (daemon shell: rumps menu bar, openwakeword hey_jarvis onnx, DaemonConfig)
+Last activity: 2026-03-02 — Completed 04-01: velar-daemon shell with VelarDaemon, WakeWordListener, DaemonConfig
 
-Progress: [███████░░░] 64%
+Progress: [████████░░] 73%
 
 ## Performance Metrics
 
@@ -43,9 +43,10 @@ Progress: [███████░░░] 64%
 | 01-foundation | 2 | 7 min | 3.5 min |
 | 02-voice-pipeline | 3 | 17 min | 5.7 min |
 | 03-memory-system | 2 | 23 min | 11.5 min |
+| 04-mac-daemon | 1 | 5 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (5 min), 02-02 (6 min), 02-03 (6 min), 03-01 (6 min), 03-02 (17 min)
+- Last 5 plans: 02-03 (6 min), 03-01 (6 min), 03-02 (17 min), 04-01 (5 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -91,6 +92,10 @@ Recent decisions affecting current work:
 - [03-02]: Cosine similarity threshold 0.92 for contradiction detection — supersede instead of duplicate insert
 - [03-02]: voice_endpoint gets background extraction but NOT memory retrieval — streaming pipeline refactor deferred
 - [03-02]: Test config mock: force-set sys.modules['app.config'] with complete settings in each test — prevents MagicMock URL errors from test ordering conflicts
+- [04-01]: inference_framework='onnx' explicitly set in Model() — tflite_runtime unavailable on macOS ARM64; onnxruntime handles .onnx models natively
+- [04-01]: audio stream started only from application_will_finish_launching_, never __init__ — rumps deadlock prevention per research pitfall 2
+- [04-01]: _on_wake 2s placeholder deferred to Phase 04-02 which wires real audio capture + backend POST
+- [04-01]: paused flag uses atomic bool (no lock needed in CPython) — toggle from main thread, read from audio thread
 
 ### Pending Todos
 
@@ -108,5 +113,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 03-02-PLAN.md — background extraction, /memory CRUD API, hallucination guard, 17 tests, MEM-01 through MEM-05 satisfied
+Stopped at: Completed 04-01-PLAN.md — velar-daemon shell with rumps menu bar, openwakeword hey_jarvis onnx detection, DaemonConfig, VOICE-01 + DEV-01 satisfied
 Resume file: None

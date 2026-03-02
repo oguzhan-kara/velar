@@ -9,7 +9,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Voice & Interaction
 
-- [ ] **VOICE-01**: User can activate VELAR with wake word ("Hey VELAR") on Mac
+- [x] **VOICE-01**: User can activate VELAR with wake word ("Hey VELAR") on Mac
 - [x] **VOICE-02**: User can speak naturally and VELAR understands via Whisper STT
 - [x] **VOICE-03**: VELAR responds with premium natural voice via ElevenLabs/Edge TTS
 - [x] **VOICE-04**: User can have a hands-free voice conversation without touching any screen
@@ -52,7 +52,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Devices
 
-- [ ] **DEV-01**: Mac daemon runs as always-on background service with wake word detection
+- [x] **DEV-01**: Mac daemon runs as always-on background service with wake word detection
 - [ ] **DEV-02**: iPhone app (Flutter) provides voice input and chat interface
 - [ ] **DEV-03**: iPhone app receives and displays push notifications from VELAR
 - [ ] **DEV-04**: Apple Watch app (Swift) displays quick briefings and accepts voice commands
@@ -108,7 +108,7 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VOICE-01 | Phase 2 | Pending |
+| VOICE-01 | Phase 2 | Complete |
 | VOICE-02 | Phase 2 | Complete |
 | VOICE-03 | Phase 2 | Complete |
 | VOICE-04 | Phase 2 | Complete |
@@ -133,7 +133,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | PLACE-01 | Phase 7 | Pending |
 | PLACE-02 | Phase 7 | Pending |
 | PLACE-03 | Phase 7 | Pending |
-| DEV-01 | Phase 4 | Pending |
+| DEV-01 | Phase 4 | Complete |
 | DEV-02 | Phase 6 | Pending |
 | DEV-03 | Phase 5 | Pending |
 | DEV-04 | Phase 7 | Pending |

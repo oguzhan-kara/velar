@@ -83,7 +83,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Daemon shell: rumps menu bar app, openwakeword hey_jarvis wake word loop, DaemonConfig loader
+- [x] 04-01-PLAN.md — Daemon shell: rumps menu bar app, openwakeword hey_jarvis wake word loop, DaemonConfig loader (completed 2026-03-02)
 - [ ] 04-02-PLAN.md — Audio capture pipeline: Silero VAD recording, chime playback, backend HTTP client, launchd boot persistence
 - [ ] 04-03-PLAN.md — Backend integration tools: calendar, weather, reminders, places + Anthropic tool_use loop activation
 
@@ -145,7 +145,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Foundation | 2/2 | Complete    | 2026-03-01 |
 | 2. Voice Pipeline | 3/3 | Complete    | 2026-03-02 |
 | 3. Memory System | 2/2 | Complete    | 2026-03-02 |
-| 4. Mac Daemon and Integrations | 0/3 | Not started | - |
+| 4. Mac Daemon and Integrations | 1/3 | In progress | - |
 | 5. Proactive Engine | 0/2 | Not started | - |
 | 6. iPhone App | 0/2 | Not started | - |
 | 7. Watch App and Advice Features | 0/3 | Not started | - |
