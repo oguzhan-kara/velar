@@ -4,6 +4,7 @@ import time
 import numpy as np
 import sounddevice as sd
 from openwakeword.model import Model
+from openwakeword.utils import download_models
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,8 @@ class WakeWordListener:
         self.sensitivity = sensitivity
         self.audio_device_index = audio_device_index
         self.paused = False
+        # Download hey_jarvis model if not already cached
+        download_models(["hey_jarvis"])
         # inference_framework='onnx' required for macOS ARM64 (tflite not available on arm64)
         self._model = Model(wakeword_models=["hey jarvis"], inference_framework="onnx")
         logger.info("WakeWordListener initialized (sensitivity=%.2f)", sensitivity)
