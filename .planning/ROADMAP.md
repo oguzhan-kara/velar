@@ -80,11 +80,12 @@ Plans:
   3. VELAR can tell the user their next calendar event when asked
   4. VELAR can report current weather and forecast for the user's location
   5. User can ask VELAR to set a reminder and it is created
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Mac Python daemon with openwakeword wake word detection, sounddevice audio capture, VAD, and launchd boot persistence
-- [ ] 04-02: Integration tools — Google/Apple Calendar (OAuth2), OpenWeatherMap weather, Google Places API, and timer/reminder tool
+- [ ] 04-01-PLAN.md — Daemon shell: rumps menu bar app, openwakeword hey_jarvis wake word loop, DaemonConfig loader
+- [ ] 04-02-PLAN.md — Audio capture pipeline: Silero VAD recording, chime playback, backend HTTP client, launchd boot persistence
+- [ ] 04-03-PLAN.md — Backend integration tools: calendar, weather, reminders, places + Anthropic tool_use loop activation
 
 ### Phase 5: Proactive Engine
 **Goal**: VELAR proactively delivers a morning briefing and sends time-sensitive alerts without being asked
