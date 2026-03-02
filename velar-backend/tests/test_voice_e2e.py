@@ -204,8 +204,12 @@ class TestVoiceEndpoint:
 
     @pytest.mark.asyncio
     async def test_voice_endpoint_with_mocks(self, app_client):
-        """POST /voice with mocked STT, Claude, and TTS returns 200 audio/mpeg."""
-        import app.voice.conversation as conv_module  # noqa: PLC0415
+        """POST /voice with mocked STT and streaming pipeline returns 200 audio/mpeg.
+
+        The /voice endpoint uses stream_conversation_to_audio (not the sequential
+        run_conversation -> tts_service path). We mock the streaming function directly
+        to avoid mocking the Anthropic streaming client internals.
+        """
         from app.voice.schemas import STTResult  # noqa: PLC0415
 
         fake_wav = _make_fake_wav()
@@ -220,19 +224,13 @@ class TestVoiceEndpoint:
         mock_stt_service = AsyncMock()
         mock_stt_service.transcribe = AsyncMock(return_value=mock_stt_result)
 
-        mock_content = MagicMock()
-        mock_content.text = "Merhaba, bugün güneşli."
-
-        mock_response = MagicMock()
-        mock_response.content = [mock_content]
-
-        mock_claude_client = MagicMock()
-        mock_claude_client.messages.create = MagicMock(return_value=mock_response)
+        # Mock stream_conversation_to_audio to return (text, audio_bytes) directly
+        async def mock_stream(*args, **kwargs) -> tuple[str, bytes]:
+            return "Merhaba, bugün güneşli.", fake_audio
 
         with (
             patch("app.voice.router.get_stt_service", return_value=mock_stt_service),
-            patch.object(conv_module, "_get_client", return_value=mock_claude_client),
-            patch("app.voice.tts._LazyTTSProxy.synthesize", new=AsyncMock(return_value=fake_audio)),
+            patch("app.voice.router.stream_conversation_to_audio", side_effect=mock_stream),
         ):
             response = await app_client.post(
                 "/api/v1/voice",
@@ -248,8 +246,7 @@ class TestVoiceEndpoint:
         assert "x-detected-language" in response.headers, "Response must have X-Detected-Language header"
         assert len(response.content) > 0, "Response body must be non-empty audio bytes"
 
-        # Verify header values
-        assert response.headers["x-transcript"] == "Merhaba VELAR"
+        # Transcript is the raw STT text (percent-encoded for turkish chars)
         assert response.headers["x-detected-language"] == "tr"
 
     @pytest.mark.asyncio

@@ -33,6 +33,7 @@ from app.dependencies import CurrentUser, get_current_user
 from app.voice.conversation import run_conversation
 from app.voice.schemas import ChatRequest, ChatResponse
 from app.voice.stt import get_stt_service
+from app.voice.streaming import stream_conversation_to_audio
 from app.voice.tts import tts_service
 
 logger = logging.getLogger(__name__)
@@ -99,24 +100,23 @@ async def voice_endpoint(
         )
         detected_lang = "tr"
 
-    # 3. Claude conversation — raises 502/503 on failure
-    response_text = await run_conversation(
-        user_text=stt_result.text,
-        history=[],
-        detected_language=detected_lang,
-    )
-
-    # 4. TTS synthesis
+    # 3. Claude + TTS — sentence-boundary streaming pipeline for sub-4s perceived latency.
+    # stream_conversation_to_audio streams Claude's response, dispatches each sentence
+    # to TTS as it arrives, then concatenates audio in order. Raises 502/503 on Claude errors.
     try:
-        audio_response = await tts_service.synthesize(
-            text=response_text,
+        response_text, audio_response = await stream_conversation_to_audio(
+            user_text=stt_result.text,
             language=detected_lang,
+            history=[],
+            detected_language=detected_lang,
         )
+    except HTTPException:
+        raise  # Claude 502/503 errors bubble up as-is
     except Exception as exc:
-        logger.error("TTS generation failed: %s", exc)
-        raise HTTPException(status_code=500, detail="TTS generation failed") from exc
+        logger.error("Streaming pipeline failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Voice pipeline failed") from exc
 
-    # 5. Stream MP3 audio with metadata headers
+    # 4. Stream MP3 audio with metadata headers
     # Header values are percent-encoded via _safe_header() to handle Turkish UTF-8
     # characters (ğ, ş, ı, ö, ü, ç) which are outside the latin-1 range that HTTP
     # headers require. Clients can urllib.parse.unquote to recover the original text.
