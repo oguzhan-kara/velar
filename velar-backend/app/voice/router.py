@@ -10,9 +10,24 @@ Both endpoints require a valid JWT bearer token (Depends(get_current_user)).
 import base64
 import io
 import logging
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
+
+
+def _safe_header(value: str) -> str:
+    """Percent-encode a header value so it only contains latin-1 safe characters.
+
+    HTTP headers are restricted to ISO-8859-1 (latin-1). Turkish text contains
+    characters outside this range (ğ, ş, ı, ö, ü, ç). Percent-encoding ensures
+    the header is transported safely; clients that care can urllib.parse.unquote.
+    """
+    try:
+        value.encode("latin-1")
+        return value  # Already safe — no encoding needed
+    except UnicodeEncodeError:
+        return quote(value, safe=" ,.-!?:")
 
 from app.dependencies import CurrentUser, get_current_user
 from app.voice.conversation import run_conversation
@@ -102,12 +117,15 @@ async def voice_endpoint(
         raise HTTPException(status_code=500, detail="TTS generation failed") from exc
 
     # 5. Stream MP3 audio with metadata headers
+    # Header values are percent-encoded via _safe_header() to handle Turkish UTF-8
+    # characters (ğ, ş, ı, ö, ü, ç) which are outside the latin-1 range that HTTP
+    # headers require. Clients can urllib.parse.unquote to recover the original text.
     return StreamingResponse(
         io.BytesIO(audio_response),
         media_type="audio/mpeg",
         headers={
-            "X-Transcript": stt_result.text,
-            "X-Response-Text": response_text,
+            "X-Transcript": _safe_header(stt_result.text),
+            "X-Response-Text": _safe_header(response_text),
             "X-Detected-Language": detected_lang,
         },
     )
