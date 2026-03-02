@@ -73,9 +73,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Language
 
-- [ ] **LANG-01**: VELAR understands and responds in Turkish
-- [ ] **LANG-02**: VELAR understands and responds in English
-- [ ] **LANG-03**: VELAR handles code-switching (Turkish-English mixed sentences) naturally
+- [x] **LANG-01**: VELAR understands and responds in Turkish
+- [x] **LANG-02**: VELAR understands and responds in English
+- [x] **LANG-03**: VELAR handles code-switching (Turkish-English mixed sentences) naturally
 
 ## v2 Requirements
 
@@ -145,9 +145,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | INTG-02 | Phase 4 | Pending |
 | INTG-03 | Phase 4 | Pending |
 | INTG-04 | Phase 4 | Pending |
-| LANG-01 | Phase 2 | Pending |
-| LANG-02 | Phase 2 | Pending |
-| LANG-03 | Phase 2 | Pending |
+| LANG-01 | Phase 2 | Complete |
+| LANG-02 | Phase 2 | Complete |
+| LANG-03 | Phase 2 | Complete |
 
 **Coverage:**
 - v1 requirements: 40 total
