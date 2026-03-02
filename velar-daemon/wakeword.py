@@ -17,7 +17,8 @@ class WakeWordListener:
         self.sensitivity = sensitivity
         self.audio_device_index = audio_device_index
         self.paused = False
-        self._model = Model(wakeword_models=["hey jarvis"])
+        # inference_framework='onnx' required for macOS ARM64 (tflite not available on arm64)
+        self._model = Model(wakeword_models=["hey jarvis"], inference_framework="onnx")
         logger.info("WakeWordListener initialized (sensitivity=%.2f)", sensitivity)
 
     def run(self):
