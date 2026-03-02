@@ -12,5 +12,10 @@ class Settings(BaseSettings):
     environment: str = "development"
     debug: bool = False
 
+    # Voice pipeline (Phase 2)
+    anthropic_api_key: str = ""          # Required for Claude conversation
+    elevenlabs_api_key: str = ""         # Required for ElevenLabs TTS; empty = Edge TTS only
+    whisper_model_size: str = "large-v3-turbo"  # STT model size
+
 
 settings = Settings()
