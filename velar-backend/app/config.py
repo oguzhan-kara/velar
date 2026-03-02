@@ -27,5 +27,27 @@ class Settings(BaseSettings):
     google_places_api_key: str = ""    # Places API (New) key
     places_city: str = "Istanbul"      # City for place searches
 
+    # Free-tier provider selection (Phase 5)
+    # TTS: "edge" (default, free) or "elevenlabs" (paid, higher quality)
+    tts_provider: str = "edge"
+    # LLM: "gemini" (default, free tier) or "anthropic" (paid, Claude Haiku)
+    llm_provider: str = "gemini"
+    # Embeddings: "local" (default, sentence-transformers, no API key) or "openai" (paid)
+    embedding_provider: str = "local"
+
+    # Google AI (Gemini) — free at aistudio.google.com
+    google_ai_api_key: str = ""
+
+    # Local embedding model configuration
+    embedding_model: str = "paraphrase-multilingual-MiniLM-L12-v2"  # 384 dims, Turkish-native
+    embedding_dims: int = 384  # 384 for local/sentence-transformers, 1536 for openai
+
+    @property
+    def resolved_embedding_dims(self) -> int:
+        """Return the correct embedding dimension based on the active provider."""
+        if self.embedding_provider == "openai":
+            return 1536
+        return 384  # local sentence-transformers default
+
 
 settings = Settings()
