@@ -8,7 +8,7 @@ progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 2 of 7 (Voice Pipeline)
-Plan: 2 of 3 in current phase (COMPLETE)
-Status: Phase 2 in progress — 02-02 Claude conversation loop and TTS done, ready for 02-03
-Last activity: 2026-03-02 — Completed 02-02: Claude Haiku loop, ElevenLabs/Edge-TTS, /voice and /chat endpoints
+Plan: 3 of 3 in current phase (COMPLETE)
+Status: Phase 2 COMPLETE — all 3 plans executed, language pipeline + streaming ready
+Last activity: 2026-03-02 — Completed 02-03: language intelligence, sentence-boundary streaming, 35 Phase 2 tests green
 
-Progress: [████░░░░░░] 29%
+Progress: [█████░░░░░] 43%
 
 ## Performance Metrics
 
@@ -41,10 +41,10 @@ Progress: [████░░░░░░] 29%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 2 | 7 min | 3.5 min |
-| 02-voice-pipeline | 2 | 11 min | 5.5 min |
+| 02-voice-pipeline | 3 | 17 min | 5.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (5 min), 02-02 (6 min)
+- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (5 min), 02-02 (6 min), 02-03 (6 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -76,6 +76,10 @@ Recent decisions affecting current work:
 - [02-02]: ElevenLabs primary, Edge TTS automatic fallback — any exception triggers cascade to tr-TR-AhmetNeural / en-US-GuyNeural
 - [02-02]: _LazyTTSProxy lazy singleton — TTSService.__init__ does lazy settings import, proxy defers until first synthesize() call
 - [02-02]: sys.modules injection pattern for mock app.config in tests — avoids pydantic-settings ValidationError without .env
+- [02-03]: stream_conversation_to_audio uses asyncio.to_thread (SDK sync) + asyncio.create_task per sentence for concurrent TTS dispatch
+- [02-03]: SENTENCE_BOUNDARY_RE positive lookbehind (?<=[.!?]) keeps punctuation with sentence; whitespace after boundary consumed by split
+- [02-03]: _safe_header() percent-encodes non-latin-1 chars in StreamingResponse headers (Turkish chars break HTTP latin-1 restriction)
+- [02-03]: /voice uses sentence-boundary streaming pipeline; /chat stays sequential (JSON needs complete audio for base64 encoding)
 
 ### Pending Todos
 
@@ -91,5 +95,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 02-02-PLAN.md — Claude Haiku conversation loop, ElevenLabs/Edge-TTS, /voice and /chat endpoints
+Stopped at: Completed 02-03-PLAN.md — language intelligence, sentence-boundary streaming, full Phase 2 test suite green
 Resume file: None
