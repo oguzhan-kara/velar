@@ -7,6 +7,7 @@ DEFAULTS = {
     "backend_url": "http://localhost:8000",
     "wake_sensitivity": 0.5,
     "audio_device_index": None,  # None = sounddevice default
+    "auth_token": "",
 }
 
 
@@ -15,6 +16,7 @@ class DaemonConfig:
     backend_url: str
     wake_sensitivity: float
     audio_device_index: int | None
+    auth_token: str = ""
 
 
 def load_config() -> DaemonConfig:
@@ -31,4 +33,5 @@ def load_config() -> DaemonConfig:
         backend_url=data["backend_url"],
         wake_sensitivity=float(data["wake_sensitivity"]),
         audio_device_index=data.get("audio_device_index"),
+        auth_token=data.get("auth_token", ""),
     )
