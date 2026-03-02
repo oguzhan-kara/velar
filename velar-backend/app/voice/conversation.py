@@ -1,12 +1,14 @@
-"""Claude conversation loop for VELAR voice assistant.
+"""Conversation loop for VELAR voice assistant.
 
-Implements the reasoning stage of the voice pipeline: takes user text (from STT
-or direct text input) and returns a voice-optimized response via Claude Haiku.
+Provider selection via LLM_PROVIDER env var:
+- "gemini"    (default): Use Google Gemini 2.0 Flash (free tier at aistudio.google.com).
+- "anthropic": Use Claude Haiku (paid, unchanged from Phase 4).
 
-Phase 4: Active tool_use loop — Claude can invoke calendar, weather, reminders,
-and places tools. The loop runs until stop_reason == "end_turn", executing any
-tool calls in between. Tool failures return graceful fallback strings rather than
-crashing the loop.
+Both providers implement the full VELAR feature set:
+- VELAR_SYSTEM_PROMPT personality
+- Tool use (calendar, weather, reminders, places)
+- Language mirroring (Turkish/English auto-detect)
+- Memory context injection ([VELAR MEMORY] block)
 
 Usage:
     from app.voice.conversation import run_conversation
@@ -17,7 +19,6 @@ Usage:
 import asyncio
 import logging
 
-import anthropic
 from fastapi import HTTPException
 
 from app.voice.tools.registry import TOOL_DEFINITIONS, execute_tool
@@ -67,67 +68,239 @@ Do not reveal the underlying model or company. If asked who made you, say \
 """
 
 # ---------------------------------------------------------------------------
-# Anthropic client (module-level, lazy-safe because settings import is inside fn)
+# Anthropic client (unchanged from Phase 4 — lazy singleton)
 # ---------------------------------------------------------------------------
 
-_client: anthropic.Anthropic | None = None
+_client = None
 
 
-def _get_client() -> anthropic.Anthropic:
+def _get_client():
     """Return (or create) the Anthropic client using the current settings."""
     global _client
     if _client is None:
+        import anthropic
         from app.config import settings  # lazy import — avoids startup validation
         _client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
     return _client
 
 
 # ---------------------------------------------------------------------------
-# Conversation loop
+# Gemini tool definitions (translated from Anthropic format)
 # ---------------------------------------------------------------------------
 
-async def run_conversation(
+def _build_gemini_tools() -> list:
+    """Convert TOOL_DEFINITIONS (Anthropic format) to Gemini function_declarations format.
+
+    Anthropic uses "input_schema" with JSON Schema. Gemini uses "parameters"
+    with the same JSON Schema subset. The translation is 1-to-1 for these tools.
+    """
+    declarations = []
+    for tool in TOOL_DEFINITIONS:
+        # Anthropic's input_schema is a JSON Schema object — Gemini's parameters is the same
+        decl = {
+            "name": tool["name"],
+            "description": tool["description"],
+            "parameters": tool["input_schema"],
+        }
+        declarations.append(decl)
+    return [{"function_declarations": declarations}]
+
+
+# ---------------------------------------------------------------------------
+# Gemini conversation loop
+# ---------------------------------------------------------------------------
+
+async def _run_gemini_conversation(
     user_text: str,
     history: list[dict] | None = None,
     max_tokens: int = 512,
     detected_language: str | None = None,
-    memory_context: str | None = None,   # Phase 3: relevant memory facts
-    user_id: str | None = None,          # Phase 4: for tool context (Phase 5+ user-scoped tools)
+    memory_context: str | None = None,
+    user_id: str | None = None,
 ) -> str:
-    """Run a Claude Haiku conversation with active tool_use loop.
+    """Run a Gemini 2.0 Flash conversation with active function-calling loop.
 
-    Passes TOOL_DEFINITIONS to Claude on every call. If Claude invokes tools,
-    executes them and loops until stop_reason == "end_turn". Tool failures
-    return graceful fallback strings and never crash the loop.
+    Implements the same feature set as the Anthropic path:
+    - VELAR_SYSTEM_PROMPT personality via system_instruction
+    - Tool use via Gemini function calling (same 4 tools)
+    - Language mirroring via detected_language hint
+    - Memory context injection with hallucination guard
 
     Args:
-        user_text:          The current user message (post-STT or raw text).
-        history:            Optional list of prior turns:
-                            [{"role": "user"|"assistant", "content": str}, ...]
-                            Truncated to the last 10 turns before sending.
-        max_tokens:         Maximum tokens for Claude's response (default 512 for voice).
-        detected_language:  Optional language code ("tr" or "en") detected from STT or
-                            heuristic. When provided, appends a language context note to
-                            the system prompt so Claude responds in the correct language.
-                            Do NOT modify VELAR_SYSTEM_PROMPT — always create a local copy.
-        memory_context:     Optional formatted string of relevant memory facts from
-                            get_relevant_facts() + facts_to_context_string(). When
-                            provided, injected into the system prompt with hallucination
-                            guard instructions. If None or empty, no memory block added.
-        user_id:            Optional user ID for tool context (used by Phase 5+ user-scoped tools).
+        user_text:         The current user message.
+        history:           Optional list of prior turns (role/content dicts).
+        max_tokens:        Max tokens for Gemini's response.
+        detected_language: Optional language code ("tr" or "en").
+        memory_context:    Optional formatted memory facts string.
+        user_id:           Optional user ID for tool context.
 
     Returns:
         The assistant's text response, optimized for TTS.
 
     Raises:
+        HTTPException(503): GOOGLE_AI_API_KEY is not configured.
+        HTTPException(502): Gemini API returned an error.
+    """
+    import google.generativeai as genai
+    from app.config import settings
+
+    if not settings.google_ai_api_key:
+        raise HTTPException(
+            status_code=503,
+            detail="Google AI API key not configured (set GOOGLE_AI_API_KEY)",
+        )
+
+    genai.configure(api_key=settings.google_ai_api_key)
+
+    # Build system prompt — same structure as Anthropic path
+    system = VELAR_SYSTEM_PROMPT
+
+    if memory_context and memory_context.strip():
+        system += (
+            "\n\n## [VELAR MEMORY — What I know about you]\n"
+            + memory_context
+            + "\n\n"
+            "[IMPORTANT: The above list is EVERYTHING I know about you. "
+            "If a fact is not listed above, I do NOT know it. "
+            "Do NOT claim facts about you that are not listed here. "
+            "When referencing a stored fact, be natural — do not say 'according to my memory'.]"
+        )
+
+    if detected_language:
+        lang_name = {"tr": "Turkish", "en": "English"}.get(detected_language, detected_language)
+        system += f"\n\n[Context: The user is speaking {lang_name}. Respond in {lang_name}.]"
+
+    # Build Gemini tool definitions
+    gemini_tools = _build_gemini_tools()
+
+    try:
+        # Create model with system_instruction and tools
+        model = genai.GenerativeModel(
+            "gemini-2.0-flash",
+            tools=gemini_tools,
+            system_instruction=system,
+        )
+
+        # Build history for Gemini chat format
+        # Gemini chat history uses {"role": "user"|"model", "parts": [text]}
+        chat_history = []
+        prior_turns: list[dict] = list(history or [])
+        if len(prior_turns) > 10:
+            prior_turns = prior_turns[-10:]
+
+        for turn in prior_turns:
+            role = "model" if turn.get("role") == "assistant" else "user"
+            content = turn.get("content", "")
+            if isinstance(content, str):
+                chat_history.append({"role": role, "parts": [content]})
+            # Skip complex content blocks from prior tool turns — Gemini chat
+            # history only supports text messages. Tool results from prior turns
+            # are not replayed; only the most recent conversation turn matters.
+
+        chat = model.start_chat(history=chat_history)
+
+        # Active function-calling loop — mirrors Anthropic tool_use loop
+        current_message = user_text
+
+        while True:
+            def _send_message(msg):
+                return chat.send_message(msg)
+
+            response = await asyncio.to_thread(_send_message, current_message)
+
+            # Check for function calls in the response parts
+            function_calls = []
+            text_parts = []
+
+            for part in response.parts:
+                if hasattr(part, "function_call") and part.function_call.name:
+                    function_calls.append(part.function_call)
+                elif hasattr(part, "text") and part.text:
+                    text_parts.append(part.text)
+
+            if function_calls:
+                # Execute all function calls and collect responses
+                from google.generativeai.types import content_types
+                tool_response_parts = []
+
+                for fc in function_calls:
+                    tool_name = fc.name
+                    # fc.args is a MapComposite (proto-plus mapping) — convert to dict
+                    tool_inputs = dict(fc.args) if fc.args else {}
+
+                    try:
+                        result = await execute_tool(tool_name, tool_inputs, user_id)
+                    except Exception as exc:
+                        logger.warning("Tool %r failed: %s", tool_name, exc)
+                        result = f"I couldn't fetch that right now. ({exc})"
+
+                    tool_response_parts.append(
+                        genai.protos.Part(
+                            function_response=genai.protos.FunctionResponse(
+                                name=tool_name,
+                                response={"result": str(result)},
+                            )
+                        )
+                    )
+
+                # Send all function responses back in one message
+                # This continues the loop — Gemini will synthesize the final response
+                current_message = tool_response_parts
+
+            else:
+                # No function calls — this is the final text response
+                if text_parts:
+                    return "".join(text_parts)
+                # Fallback: try finish_message or candidates
+                try:
+                    return response.text
+                except Exception:
+                    return "I couldn't process that request right now."
+
+    except HTTPException:
+        raise  # Re-raise our own HTTP exceptions as-is
+    except Exception as exc:
+        error_str = str(exc).lower()
+        if "api_key" in error_str or "api key" in error_str or "authentication" in error_str:
+            logger.error("Gemini authentication failed: %s", exc)
+            raise HTTPException(
+                status_code=503,
+                detail="Google AI API key not configured or invalid",
+            ) from exc
+        logger.error("Gemini API error: %s", exc)
+        raise HTTPException(
+            status_code=502,
+            detail="Gemini API error",
+        ) from exc
+
+
+# ---------------------------------------------------------------------------
+# Anthropic (Claude Haiku) conversation loop — unchanged from Phase 4
+# ---------------------------------------------------------------------------
+
+async def _run_anthropic_conversation(
+    user_text: str,
+    history: list[dict] | None = None,
+    max_tokens: int = 512,
+    detected_language: str | None = None,
+    memory_context: str | None = None,
+    user_id: str | None = None,
+) -> str:
+    """Run a Claude Haiku conversation with active tool_use loop.
+
+    This is the original Phase 4 implementation, preserved intact.
+    Activated when LLM_PROVIDER=anthropic.
+
+    Raises:
         HTTPException(502): Claude API returned an error.
         HTTPException(503): Anthropic API key is not configured.
     """
+    import anthropic
+
     # Build system prompt — never modify the VELAR_SYSTEM_PROMPT constant
     system = VELAR_SYSTEM_PROMPT
 
     # Inject memory context with hallucination guard (Phase 3)
-    # The guard is CRITICAL: without it, Claude may invent facts it wasn't given.
     if memory_context and memory_context.strip():
         system += (
             "\n\n## [VELAR MEMORY — What I know about you]\n"
@@ -213,3 +386,61 @@ async def run_conversation(
             status_code=502,
             detail="Claude API error",
         ) from exc
+
+
+# ---------------------------------------------------------------------------
+# Public entry point — dispatches to provider based on LLM_PROVIDER setting
+# ---------------------------------------------------------------------------
+
+async def run_conversation(
+    user_text: str,
+    history: list[dict] | None = None,
+    max_tokens: int = 512,
+    detected_language: str | None = None,
+    memory_context: str | None = None,   # Phase 3: relevant memory facts
+    user_id: str | None = None,          # Phase 4: for tool context
+) -> str:
+    """Run a conversation turn with the configured LLM provider.
+
+    Dispatches to Gemini (default, free) or Anthropic (paid) based on
+    the LLM_PROVIDER setting.
+
+    Args:
+        user_text:          The current user message (post-STT or raw text).
+        history:            Optional list of prior turns:
+                            [{"role": "user"|"assistant", "content": str}, ...]
+                            Truncated to the last 10 turns before sending.
+        max_tokens:         Maximum tokens for the response (default 512 for voice).
+        detected_language:  Optional language code ("tr" or "en").
+        memory_context:     Optional formatted string of relevant memory facts.
+        user_id:            Optional user ID for tool context.
+
+    Returns:
+        The assistant's text response, optimized for TTS.
+
+    Raises:
+        HTTPException(502): LLM API returned an error.
+        HTTPException(503): Required API key is not configured.
+    """
+    from app.config import settings
+    provider = getattr(settings, "llm_provider", "gemini").lower()
+
+    if provider == "anthropic":
+        return await _run_anthropic_conversation(
+            user_text=user_text,
+            history=history,
+            max_tokens=max_tokens,
+            detected_language=detected_language,
+            memory_context=memory_context,
+            user_id=user_id,
+        )
+    else:
+        # Default: gemini
+        return await _run_gemini_conversation(
+            user_text=user_text,
+            history=history,
+            max_tokens=max_tokens,
+            detected_language=detected_language,
+            memory_context=memory_context,
+            user_id=user_id,
+        )
