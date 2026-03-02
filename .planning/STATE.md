@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-last_updated: "2026-03-02T14:05:28Z"
+last_updated: "2026-03-02T14:14:00Z"
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 5
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # Project State
@@ -23,28 +23,28 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 2 of 7 (Voice Pipeline)
-Plan: 1 of 3 in current phase (COMPLETE)
-Status: Phase 2 in progress — 02-01 STT service done, ready for 02-02
-Last activity: 2026-03-02 — Completed 02-01: faster-whisper STT service, voice schemas, Phase 2 config keys, WER test scaffold
+Plan: 2 of 3 in current phase (COMPLETE)
+Status: Phase 2 in progress — 02-02 Claude conversation loop and TTS done, ready for 02-03
+Last activity: 2026-03-02 — Completed 02-02: Claude Haiku loop, ElevenLabs/Edge-TTS, /voice and /chat endpoints
 
-Progress: [███░░░░░░░] 21%
+Progress: [████░░░░░░] 29%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: 4 min
-- Total execution time: 0.20 hours
+- Total plans completed: 4
+- Average duration: 4.5 min
+- Total execution time: 0.30 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 2 | 7 min | 3.5 min |
-| 02-voice-pipeline | 1 | 5 min | 5 min |
+| 02-voice-pipeline | 2 | 11 min | 5.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (5 min)
+- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (5 min), 02-02 (6 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -71,6 +71,11 @@ Recent decisions affecting current work:
 - [02-01]: anthropic_api_key and elevenlabs_api_key default to empty string — app starts without voice keys; only voice endpoints fail
 - [02-01]: get_stt_service() lazy singleton — model loads only on first call, not at import time
 - [02-01]: conftest.py lazy app import — voice unit tests run without .env file (no Supabase credentials needed)
+- [02-02]: claude-haiku-4-5-20251001 selected for voice — fastest model for voice latency per Phase 2 research
+- [02-02]: Tool-use scaffold present as commented code in conversation.py — Phase 4+ adds real tools (calendar, reminders)
+- [02-02]: ElevenLabs primary, Edge TTS automatic fallback — any exception triggers cascade to tr-TR-AhmetNeural / en-US-GuyNeural
+- [02-02]: _LazyTTSProxy lazy singleton — TTSService.__init__ does lazy settings import, proxy defers until first synthesize() call
+- [02-02]: sys.modules injection pattern for mock app.config in tests — avoids pydantic-settings ValidationError without .env
 
 ### Pending Todos
 
@@ -86,5 +91,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-02
-Stopped at: Completed 02-01-PLAN.md — faster-whisper STT service, voice schemas, Phase 2 config, Turkish WER test scaffold
+Stopped at: Completed 02-02-PLAN.md — Claude Haiku conversation loop, ElevenLabs/Edge-TTS, /voice and /chat endpoints
 Resume file: None

@@ -11,8 +11,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **VOICE-01**: User can activate VELAR with wake word ("Hey VELAR") on Mac
 - [x] **VOICE-02**: User can speak naturally and VELAR understands via Whisper STT
-- [ ] **VOICE-03**: VELAR responds with premium natural voice via ElevenLabs/Edge TTS
-- [ ] **VOICE-04**: User can have a hands-free voice conversation without touching any screen
+- [x] **VOICE-03**: VELAR responds with premium natural voice via ElevenLabs/Edge TTS
+- [x] **VOICE-04**: User can have a hands-free voice conversation without touching any screen
 - [x] **VOICE-05**: User can mix Turkish and English in a single sentence and VELAR understands
 
 ### Memory & Learning
@@ -110,8 +110,8 @@ Deferred to future release. Tracked but not in current roadmap.
 |-------------|-------|--------|
 | VOICE-01 | Phase 2 | Pending |
 | VOICE-02 | Phase 2 | Complete |
-| VOICE-03 | Phase 2 | Pending |
-| VOICE-04 | Phase 2 | Pending |
+| VOICE-03 | Phase 2 | Complete |
+| VOICE-04 | Phase 2 | Complete |
 | VOICE-05 | Phase 2 | Complete |
 | MEM-01 | Phase 3 | Pending |
 | MEM-02 | Phase 3 | Pending |

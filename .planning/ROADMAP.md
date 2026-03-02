@@ -142,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete    | 2026-03-01 |
-| 2. Voice Pipeline | 1/3 | In progress | - |
+| 2. Voice Pipeline | 2/3 | In Progress|  |
 | 3. Memory System | 0/2 | Not started | - |
 | 4. Mac Daemon and Integrations | 0/2 | Not started | - |
 | 5. Proactive Engine | 0/2 | Not started | - |
