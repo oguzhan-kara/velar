@@ -41,17 +41,16 @@ Plans:
 ### Phase 2: Voice Pipeline
 **Goal**: Users can speak to VELAR and receive a premium voice response in Turkish or English
 **Depends on**: Phase 1
-**Requirements**: VOICE-01, VOICE-02, VOICE-03, VOICE-04, VOICE-05, LANG-01, LANG-02, LANG-03
+**Requirements**: VOICE-02, VOICE-03, VOICE-04, VOICE-05, LANG-01, LANG-02, LANG-03
 **Success Criteria** (what must be TRUE):
-  1. User can activate VELAR with the wake word "Hey VELAR" on Mac without touching the keyboard
-  2. User can speak a natural sentence and VELAR transcribes it accurately via Whisper STT (Turkish WER under 15% on 50 common assistant commands)
-  3. VELAR responds with a premium, natural-sounding voice (ElevenLabs or verified fallback) — not robotic
-  4. A complete voice round-trip (speak → hear response) completes in under 4 seconds perceived latency
-  5. User can speak a mixed Turkish-English sentence (e.g., "VELAR, bugün calendar'da ne var?") and VELAR understands and responds coherently
+  1. User can speak a natural sentence and VELAR transcribes it accurately via Whisper STT (Turkish WER under 15% on 50 common assistant commands)
+  2. VELAR responds with a premium, natural-sounding voice (ElevenLabs or verified fallback) — not robotic
+  3. A complete voice round-trip (speak → hear response) completes in under 4 seconds perceived latency
+  4. User can speak a mixed Turkish-English sentence (e.g., "VELAR, bugün calendar'da ne var?") and VELAR understands and responds coherently
 **Plans**: TBD
 
 Plans:
-- [ ] 02-01: faster-whisper STT integration with Turkish acceptance test and VAD
+- [x] 02-01: faster-whisper STT integration with Turkish acceptance test and VAD
 - [ ] 02-02: Claude tool-use loop scaffold (no tools yet) and ElevenLabs/Edge-TTS integration
 - [ ] 02-03: Language handling (Turkish, English, code-switching) and voice round-trip end-to-end test
 
@@ -74,10 +73,10 @@ Plans:
 ### Phase 4: Mac Daemon and Integrations
 **Goal**: VELAR runs as an always-on ambient service on Mac and can fetch real-world context (calendar, weather, places, reminders)
 **Depends on**: Phase 3
-**Requirements**: DEV-01, INTG-01, INTG-02, INTG-03, INTG-04
+**Requirements**: VOICE-01, DEV-01, INTG-01, INTG-02, INTG-03, INTG-04
 **Success Criteria** (what must be TRUE):
   1. VELAR starts automatically on Mac boot and runs silently in the menu bar without any user action
-  2. User can say "Hey VELAR" from across the room with no apps open and get a response
+  2. User can activate VELAR with the wake word "Hey VELAR" on Mac without touching the keyboard
   3. VELAR can tell the user their next calendar event when asked
   4. VELAR can report current weather and forecast for the user's location
   5. User can ask VELAR to set a reminder and it is created
@@ -143,7 +142,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 2/2 | Complete    | 2026-03-01 |
-| 2. Voice Pipeline | 0/3 | Not started | - |
+| 2. Voice Pipeline | 1/3 | In progress | - |
 | 3. Memory System | 0/2 | Not started | - |
 | 4. Mac Daemon and Integrations | 0/2 | Not started | - |
 | 5. Proactive Engine | 0/2 | Not started | - |
